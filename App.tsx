@@ -1,20 +1,25 @@
+import { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import TimeGridScreen from './src/screens/TimeGridScreen';
+import { notificationService } from './src/services/NotificationService';
 
 export default function App() {
+  useEffect(() => {
+    notificationService.initialize();
+  }, []);
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
+    <GestureHandlerRootView style={styles.container}>
       <StatusBar style="auto" />
-    </View>
+      <TimeGridScreen />
+    </GestureHandlerRootView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });
