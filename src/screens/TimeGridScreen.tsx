@@ -14,7 +14,6 @@ import { useScheduleStore } from '../store/scheduleStore';
 import TimeGrid from '../components/TimeGrid';
 import ScheduleFormModal from '../components/ScheduleFormModal';
 import StyleSettingsScreen from './StyleSettingsScreen';
-import MonthCalendarModal from '../components/MonthCalendarModal';
 import WeeklyHeatmapScreen from './WeeklyHeatmapScreen';
 import { notificationService } from '../services/NotificationService';
 import { useNotificationHandler } from '../hooks/useNotificationHandler';
@@ -26,29 +25,18 @@ import { useSettingsStore } from '../store/settingsStore';
 
 dayjs.locale('ko');
 
+const today = dayjs().format('YYYY-MM-DD');
+
 type ModalState =
   | { mode: 'create'; startMinutes: number; endMinutes: number }
   | { mode: 'edit'; schedule: Schedule; editScope: 'this' | 'all' }
   | null;
-
-function formatHeaderDate(dateStr: string) {
-  const d = dayjs(dateStr);
-  const today = dayjs();
-  const left = d.format('MM.DD ddd').toUpperCase();
-  let right = '';
-  if (d.isSame(today, 'day')) right = 'Today';
-  else if (d.isSame(today.subtract(1, 'day'), 'day')) right = 'Yesterday';
-  else if (d.isSame(today.add(1, 'day'), 'day')) right = 'Tomorrow';
-  return { left, right };
-}
 
 export default function TimeGridScreen() {
   const scheme = useColorScheme();
   const colors = scheme === 'dark' ? COLORS.dark : COLORS.light;
 
   const {
-    selectedDate,
-    setSelectedDate,
     getSchedulesByDate,
     addSchedule,
     updateSchedule,
@@ -58,14 +46,12 @@ export default function TimeGridScreen() {
     hasOverlap,
   } = useScheduleStore();
 
-  const schedules = getSchedulesByDate(selectedDate);
+  const schedules = getSchedulesByDate(today);
   const { gridStartHour, gridEndHour } = useSettingsStore();
   const [modalState, setModalState] = useState<ModalState>(null);
   const [settingsVisible, setSettingsVisible] = useState(false);
-  const [calendarVisible, setCalendarVisible] = useState(false);
   const [heatmapVisible, setHeatmapVisible] = useState(false);
 
-  // 알림 핸들러 초기화
   useNotificationHandler();
   const [nowStr, setNowStr] = useState(dayjs().format('HH:mm:ss'));
 
@@ -74,12 +60,10 @@ export default function TimeGridScreen() {
     return () => clearInterval(t);
   }, []);
 
-  // 새 일정 생성 시작
   const handleStartCreating = useCallback((startMinutes: number, endMinutes: number) => {
     setModalState({ mode: 'create', startMinutes, endMinutes });
   }, []);
 
-  // 기존 일정 롱프레스 → 수정 모달 (반복 일정이면 범위 선택)
   const handleEditSchedule = useCallback((schedule: Schedule) => {
     if (schedule.repeat === 'none') {
       setModalState({ mode: 'edit', schedule, editScope: 'all' });
@@ -92,14 +76,13 @@ export default function TimeGridScreen() {
     ]);
   }, []);
 
-  // 저장 (생성 or 수정)
   const handleConfirm = useCallback(
     (data: { title: string; colorCategory: ColorCategory; startTime: number; endTime: number; repeat: RepeatType; reminderOffsets: number[] }) => {
       if (!modalState) return;
 
       const excludeId = modalState.mode === 'edit' ? modalState.schedule.id : undefined;
 
-      if (hasOverlap(data.startTime, data.endTime, selectedDate, excludeId)) {
+      if (hasOverlap(data.startTime, data.endTime, today, excludeId)) {
         Alert.alert('시간 겹침', '같은 시간대에 다른 일정이 있습니다.\n시간을 조정해주세요.');
         return;
       }
@@ -112,7 +95,7 @@ export default function TimeGridScreen() {
           startTime: data.startTime,
           endTime: data.endTime,
           colorCategory: data.colorCategory,
-          date: selectedDate,
+          date: today,
           hasNotification: data.reminderOffsets.length > 0,
           repeat: data.repeat,
           reminderOffsets: data.reminderOffsets,
@@ -120,7 +103,7 @@ export default function TimeGridScreen() {
         addSchedule(newSchedule);
         notificationService.scheduleAlarmsForSchedule(newSchedule);
       } else if (modalState.editScope === 'this') {
-        addScheduleException(modalState.schedule.id, selectedDate);
+        addScheduleException(modalState.schedule.id, today);
         const newId = uuid();
         const newSchedule = {
           id: newId,
@@ -128,7 +111,7 @@ export default function TimeGridScreen() {
           startTime: data.startTime,
           endTime: data.endTime,
           colorCategory: data.colorCategory,
-          date: selectedDate,
+          date: today,
           hasNotification: data.reminderOffsets.length > 0,
           repeat: 'none' as RepeatType,
           reminderOffsets: data.reminderOffsets,
@@ -146,7 +129,6 @@ export default function TimeGridScreen() {
           hasNotification: data.reminderOffsets.length > 0,
         };
         updateSchedule(modalState.schedule.id, updates);
-        // 기존 알람 취소 후 재등록
         notificationService.cancelAllAlarmsForSchedule(modalState.schedule.id).then(() => {
           notificationService.scheduleAlarmsForSchedule({ ...modalState.schedule, ...updates });
         });
@@ -154,22 +136,20 @@ export default function TimeGridScreen() {
 
       setModalState(null);
     },
-    [modalState, selectedDate, hasOverlap, addSchedule, updateSchedule, addScheduleException]
+    [modalState, hasOverlap, addSchedule, updateSchedule, addScheduleException]
   );
 
-  // 삭제
   const handleDelete = useCallback(() => {
     if (modalState?.mode !== 'edit') return;
     const { schedule, editScope } = modalState;
     if (schedule.repeat !== 'none' && editScope !== 'this') {
-      // 반복 일정 전체 삭제 여부 재확인
       Alert.alert('반복 일정 삭제', '모든 반복 일정을 삭제할까요?', [
         { text: '취소', style: 'cancel' },
-        { text: '이 날짜만', onPress: () => { addScheduleException(schedule.id, selectedDate); setModalState(null); } },
+        { text: '이 날짜만', onPress: () => { addScheduleException(schedule.id, today); setModalState(null); } },
         { text: '모두 삭제', style: 'destructive', onPress: () => { notificationService.cancelAllAlarmsForSchedule(schedule.id); removeSchedule(schedule.id); setModalState(null); } },
       ]);
     } else if (editScope === 'this') {
-      addScheduleException(schedule.id, selectedDate);
+      addScheduleException(schedule.id, today);
       setModalState(null);
     } else {
       Alert.alert('일정 삭제', '이 일정을 삭제할까요?', [
@@ -177,21 +157,11 @@ export default function TimeGridScreen() {
         { text: '삭제', style: 'destructive', onPress: () => { notificationService.cancelAllAlarmsForSchedule(schedule.id); removeSchedule(schedule.id); setModalState(null); } },
       ]);
     }
-  }, [modalState, selectedDate, removeSchedule, addScheduleException]);
+  }, [modalState, removeSchedule, addScheduleException]);
 
-  const goToPrevDay = () =>
-    setSelectedDate(dayjs(selectedDate).subtract(1, 'day').format('YYYY-MM-DD'));
-  const goToNextDay = () =>
-    setSelectedDate(dayjs(selectedDate).add(1, 'day').format('YYYY-MM-DD'));
-  const goToToday = () => setSelectedDate(dayjs().format('YYYY-MM-DD'));
-
-  const { left: dateLeft, right: dateRight } = formatHeaderDate(selectedDate);
-
-  // 여백 요약 계산
   const freeBlocks = calculateFreeBlocks(schedules, gridStartHour, gridEndHour);
   const freeSummary = getDayFreeSummary(freeBlocks, gridStartHour, gridEndHour);
 
-  // 여백 비율에 따른 색상 및 메시지
   function summaryBarColor(): string {
     if (freeSummary.freeRatio < 0.3) return '#E05555';
     if (freeSummary.freeRatio < 0.5) return '#E07C2A';
@@ -207,26 +177,16 @@ export default function TimeGridScreen() {
     return `${h}시간 ${m}분`;
   }
 
+  const dateLabel = dayjs(today).format('MM.DD ddd').toUpperCase();
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* 헤더 */}
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={goToPrevDay} style={styles.navButton}>
-          <Text style={[styles.navArrow, { color: colors.text }]}>‹</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => setCalendarVisible(true)} style={styles.dateCenter}>
-          <Text style={[styles.dateMain, { color: colors.text }]}>
-            {dateLeft}
-            {dateRight ? (
-              <Text style={[styles.dateSub, { color: colors.textSecondary }]}>
-                {'  '}{dateRight}
-              </Text>
-            ) : null}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={goToNextDay} style={styles.navButton}>
-          <Text style={[styles.navArrow, { color: colors.text }]}>›</Text>
-        </TouchableOpacity>
+        <Text style={[styles.dateMain, { color: colors.text }]}>
+          {dateLabel}
+          <Text style={[styles.dateSub, { color: colors.textSecondary }]}>{'  '}Today</Text>
+        </Text>
         <TouchableOpacity onPress={() => setSettingsVisible(true)} style={styles.menuButton}>
           <Text style={[styles.menuDots, { color: colors.textSecondary }]}>•••</Text>
         </TouchableOpacity>
@@ -235,7 +195,7 @@ export default function TimeGridScreen() {
       {/* 타임 그리드 */}
       <TimeGrid
         schedules={schedules}
-        selectedDate={selectedDate}
+        selectedDate={today}
         onStartCreating={handleStartCreating}
         onEditSchedule={handleEditSchedule}
       />
@@ -246,7 +206,6 @@ export default function TimeGridScreen() {
           <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>
             여백 {formatHoursKo(freeSummary.totalFreeHours)}
           </Text>
-          {/* 프로그레스 바 */}
           <View style={styles.progressTrack}>
             <View
               style={[
@@ -271,9 +230,6 @@ export default function TimeGridScreen() {
 
       {/* 하단 바 */}
       <View style={[styles.bottomBar, { borderTopColor: colors.border, backgroundColor: colors.background }]}>
-        <TouchableOpacity onPress={goToToday} style={styles.todayButton}>
-          <Text style={[styles.todayText, { color: colors.textSecondary }]}>Today</Text>
-        </TouchableOpacity>
         <Text style={[styles.clockText, { color: colors.textSecondary }]}>{nowStr}</Text>
         <TouchableOpacity style={styles.calButton} onPress={() => setHeatmapVisible(true)}>
           <Text style={{ fontSize: 18 }}>📊</Text>
@@ -287,15 +243,7 @@ export default function TimeGridScreen() {
       <WeeklyHeatmapScreen
         visible={heatmapVisible}
         onClose={() => setHeatmapVisible(false)}
-        onDayPress={(date) => { setSelectedDate(date); setHeatmapVisible(false); }}
-      />
-
-      {/* 월달력 모달 */}
-      <MonthCalendarModal
-        visible={calendarVisible}
-        selectedDate={selectedDate}
-        onSelectDate={setSelectedDate}
-        onClose={() => setCalendarVisible(false)}
+        onDayPress={() => setHeatmapVisible(false)}
       />
 
       {/* 일정 생성/수정 모달 */}
@@ -327,16 +275,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 8,
+    paddingHorizontal: 16,
     paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  navButton: { padding: 8, width: 44, alignItems: 'center' },
-  navArrow: { fontSize: 26, lineHeight: 28 },
-  dateCenter: { flex: 1, alignItems: 'center' },
   dateMain: { fontSize: 17, fontWeight: '700', letterSpacing: 0.3 },
   dateSub: { fontSize: 14, fontWeight: '400' },
-  menuButton: { padding: 8, width: 44, alignItems: 'center' },
+  menuButton: { padding: 8 },
   menuDots: { fontSize: 13, letterSpacing: 1, fontWeight: '700' },
   summaryBar: {
     paddingHorizontal: 16,
@@ -380,8 +325,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
-  todayButton: { paddingVertical: 4, paddingHorizontal: 8 },
-  todayText: { fontSize: 14, fontWeight: '500' },
   clockText: { fontSize: 14, letterSpacing: 0.5 },
   calButton: { paddingVertical: 4, paddingHorizontal: 8 },
 });

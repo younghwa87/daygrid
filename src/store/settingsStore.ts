@@ -1,9 +1,9 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 
-export type BlockSize = 'small' | 'medium' | 'large';
-export type TimeFormat = '12h' | '24h';
-export type TextSize = 'small' | 'medium' | 'large';
-export type TextPosition = 'left' | 'center' | 'right';
+export type BlockSize = "small" | "medium" | "large";
+export type TimeFormat = "12h" | "24h";
+export type TextSize = "small" | "medium" | "large";
+export type TextPosition = "left" | "center" | "right";
 
 export const ROW_HEIGHTS: Record<BlockSize, number> = {
   small: 44,
@@ -12,9 +12,9 @@ export const ROW_HEIGHTS: Record<BlockSize, number> = {
 };
 
 export const TEXT_SIZES: Record<TextSize, number> = {
-  small: 10,
-  medium: 13,
-  large: 17,
+  small: 12,
+  medium: 15,
+  large: 19,
 };
 
 type SettingsStore = {
@@ -34,18 +34,20 @@ type SettingsStore = {
 };
 
 export const useSettingsStore = create<SettingsStore>((set) => ({
-  blockSize: 'medium',
-  timeFormat: '12h',
-  textSize: 'medium',
-  textPosition: 'left',
+  blockSize: "medium",
+  timeFormat: "12h",
+  textSize: "medium",
+  textPosition: "left",
   gridStartHour: 0,
-  gridEndHour: 24,
+  gridEndHour: 23,
   rowHeight: ROW_HEIGHTS.medium,
   fontSize: TEXT_SIZES.medium,
 
-  setBlockSize: (size) => set({ blockSize: size, rowHeight: ROW_HEIGHTS[size] }),
+  setBlockSize: (size) =>
+    set({ blockSize: size, rowHeight: ROW_HEIGHTS[size] }),
   setTimeFormat: (format) => set({ timeFormat: format }),
   setTextSize: (size) => set({ textSize: size, fontSize: TEXT_SIZES[size] }),
   setTextPosition: (pos) => set({ textPosition: pos }),
-  setGridRange: (startHour, endHour) => set({ gridStartHour: startHour, gridEndHour: endHour }),
+  setGridRange: (startHour, endHour) =>
+    set({ gridStartHour: startHour, gridEndHour: endHour }),
 }));
