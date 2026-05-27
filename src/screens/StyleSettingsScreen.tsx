@@ -92,7 +92,7 @@ function CategoryEditModal({
     <Modal visible transparent animationType="fade" onRequestClose={onClose}>
       <TouchableOpacity style={catEdit.backdrop} activeOpacity={1} onPress={onClose} />
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={catEdit.keyboardView}
       >
         <View style={[catEdit.box, { backgroundColor: colors.surface }]}>
@@ -136,7 +136,7 @@ function CategoryEditModal({
 }
 const catEdit = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: '#00000066' },
-  keyboardView: { justifyContent: 'flex-end' },
+  keyboardView: { flex: 1, justifyContent: 'flex-end' },
   box: { borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, gap: 16, paddingBottom: 36 },
   title: { fontSize: 16, fontWeight: '700', textAlign: 'center' },
   input: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15 },

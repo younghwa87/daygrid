@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Modal,
   View,
@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Keyboard,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Schedule, ColorCategory, RepeatType, ScheduleType } from '../types';
@@ -86,6 +87,7 @@ export default function ScheduleFormModal({
 }: Props) {
   const { colors } = useAppColors();
   const insets = useSafeAreaInsets();
+  const scrollRef = useRef<ScrollView>(null);
   const isEditing = !!editingSchedule;
 
   const [title, setTitle] = useState('');
@@ -168,6 +170,7 @@ export default function ScheduleFormModal({
             </View>
 
             <ScrollView
+              ref={scrollRef}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
               contentContainerStyle={styles.scrollContent}
@@ -178,6 +181,7 @@ export default function ScheduleFormModal({
                 style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}
                 placeholder="일정 제목"
                 placeholderTextColor={colors.textSecondary}
+                onFocus={() => scrollRef.current?.scrollTo({ y: 0, animated: true })}
                 value={title}
                 onChangeText={setTitle}
                 returnKeyType="done"
