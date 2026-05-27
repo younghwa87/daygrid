@@ -93,6 +93,15 @@ function TimeAdjuster({
   const [inputVal, setInputVal] = useState('');
   const inputRef = useRef<TextInput>(null);
 
+  const formatDigits = (digits: string) => {
+    const d = digits.replace(/[^0-9]/g, '').slice(0, 4);
+    return d.length <= 2 ? d : d.slice(0, 2) + ':' + d.slice(2);
+  };
+
+  const handleChangeText = (text: string) => {
+    setInputVal(formatDigits(text));
+  };
+
   const commitEdit = () => {
     const parsed = parseTimeInput(inputVal);
     if (parsed !== null) onChange(parsed);
@@ -100,7 +109,9 @@ function TimeAdjuster({
   };
 
   const startEdit = () => {
-    setInputVal(minutesToTimeString(minutes));
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    setInputVal(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
     setEditing(true);
     setTimeout(() => inputRef.current?.focus(), 50);
   };
@@ -121,8 +132,8 @@ function TimeAdjuster({
             ref={inputRef}
             style={[adjStyles.timeInput, { color: colors.text, borderColor: '#4A90D9' }]}
             value={inputVal}
-            onChangeText={setInputVal}
-            keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'numeric'}
+            onChangeText={handleChangeText}
+            keyboardType="numeric"
             returnKeyType="done"
             onSubmitEditing={commitEdit}
             onBlur={commitEdit}
