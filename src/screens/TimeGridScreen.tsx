@@ -291,6 +291,12 @@ export default function TimeGridScreen() {
       {/* 하단 바 */}
       <View style={[styles.bottomBar, { borderTopColor: colors.border, backgroundColor: colors.background }]}>
         <Text style={[styles.clockText, { color: colors.textSecondary }]}>{nowStr}</Text>
+        <TouchableOpacity
+          style={styles.testAlarmBtn}
+          onPress={() => notificationService.scheduleTestNotification()}
+        >
+          <Text style={styles.testAlarmText}>🔔 테스트</Text>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.calButton} onPress={() => setHeatmapVisible(true)}>
           <Text style={{ fontSize: 18 }}>🗓️</Text>
         </TouchableOpacity>
@@ -400,5 +406,7 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   clockText: { fontSize: 14, letterSpacing: 0.5 },
+  testAlarmBtn: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, backgroundColor: '#4A90D922' },
+  testAlarmText: { fontSize: 12, color: '#4A90D9', fontWeight: '600' },
   calButton: { paddingVertical: 4, paddingHorizontal: 8 },
 });

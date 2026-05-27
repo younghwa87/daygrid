@@ -316,6 +316,21 @@ class NotificationService {
     }
   }
 
+  // 5초 후 테스트 알림 (개발용)
+  async scheduleTestNotification(): Promise<void> {
+    const permitted = await this.requestPermission();
+    if (!permitted) return;
+    const triggerDate = new Date(Date.now() + 5000);
+    await this.scheduleAlarm({
+      id: `test_${Date.now()}`,
+      title: '🔔 알림 테스트',
+      body: '알림이 정상적으로 동작합니다',
+      triggerDate,
+      scheduleId: 'test',
+    });
+    Alert.alert('테스트 알림 예약', '5초 후 알림이 옵니다.\n앱을 백그라운드로 내려보세요.');
+  }
+
   // 앱 시작 시 초기화
   async initialize(): Promise<void> {
     await this.createChannel();
