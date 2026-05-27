@@ -46,7 +46,6 @@ export function calculateFreeBlocks(
   const occupied = new Uint8Array(totalMins);
 
   for (const s of schedules) {
-    if (s.isOverflow) continue;
     const sStart = Math.max(0, s.startTime - startMin);
     const sEnd = Math.min(totalMins, s.endTime - startMin);
     for (let m = sStart; m < sEnd; m++) {
