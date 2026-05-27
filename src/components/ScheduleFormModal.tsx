@@ -38,6 +38,45 @@ type Props = {
   onCancel: () => void;
 };
 
+function parseTimeInput(raw: string): number | null {
+  const s = raw.trim().replace(/\s/g, '');
+  if (!s) return null;
+
+  // "HH:MM" or "H:MM"
+  if (s.includes(':')) {
+    const [hPart, mPart] = s.split(':');
+    const h = parseInt(hPart, 10);
+    const m = parseInt(mPart, 10);
+    if (isNaN(h) || isNaN(m) || m < 0 || m > 59 || h < 0 || h > 30) return null;
+    return h * 60 + m;
+  }
+
+  const n = parseInt(s, 10);
+  if (isNaN(n)) return null;
+
+  // 1~4자리 숫자
+  if (s.length <= 2) {
+    // "9" → 9:00, "14" → 14:00
+    if (n < 0 || n > 30) return null;
+    return n * 60;
+  }
+  if (s.length === 3) {
+    // "930" → 9:30
+    const h = parseInt(s[0], 10);
+    const m = parseInt(s.slice(1), 10);
+    if (m < 0 || m > 59) return null;
+    return h * 60 + m;
+  }
+  if (s.length === 4) {
+    // "0930" or "1430"
+    const h = parseInt(s.slice(0, 2), 10);
+    const m = parseInt(s.slice(2), 10);
+    if (h < 0 || h > 30 || m < 0 || m > 59) return null;
+    return h * 60 + m;
+  }
+  return null;
+}
+
 function TimeAdjuster({
   label,
   minutes,
@@ -50,6 +89,22 @@ function TimeAdjuster({
   badge?: string;
 }) {
   const { colors } = useAppColors();
+  const [editing, setEditing] = useState(false);
+  const [inputVal, setInputVal] = useState('');
+  const inputRef = useRef<TextInput>(null);
+
+  const commitEdit = () => {
+    const parsed = parseTimeInput(inputVal);
+    if (parsed !== null) onChange(parsed);
+    setEditing(false);
+  };
+
+  const startEdit = () => {
+    setInputVal(minutesToTimeString(minutes));
+    setEditing(true);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  };
+
   return (
     <View style={adjStyles.row}>
       <Text style={[adjStyles.label, { color: colors.textSecondary }]}>{label}</Text>
@@ -61,9 +116,25 @@ function TimeAdjuster({
         >
           <Text style={[adjStyles.btnText, { color: colors.text }]}>−</Text>
         </TouchableOpacity>
-        <Text style={[adjStyles.time, { color: colors.text }]}>
-          {minutesToTimeString(minutes)}
-        </Text>
+        {editing ? (
+          <TextInput
+            ref={inputRef}
+            style={[adjStyles.timeInput, { color: colors.text, borderColor: '#4A90D9' }]}
+            value={inputVal}
+            onChangeText={setInputVal}
+            keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'numeric'}
+            returnKeyType="done"
+            onSubmitEditing={commitEdit}
+            onBlur={commitEdit}
+            selectTextOnFocus
+          />
+        ) : (
+          <TouchableOpacity onPress={startEdit} style={adjStyles.timeTouchable}>
+            <Text style={[adjStyles.time, { color: colors.text }]}>
+              {minutesToTimeString(minutes)}
+            </Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity
           onPress={() => onChange(minutes + 10)}
           style={[adjStyles.btn, { borderColor: colors.border }]}
@@ -341,6 +412,17 @@ const adjStyles = StyleSheet.create({
   },
   btnText: { fontSize: 18, lineHeight: 20 },
   time: { fontSize: 15, fontWeight: '600', width: 60, textAlign: 'center' },
+  timeTouchable: { width: 60, alignItems: 'center' },
+  timeInput: {
+    fontSize: 15,
+    fontWeight: '600',
+    width: 60,
+    textAlign: 'center',
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingVertical: 2,
+    paddingHorizontal: 4,
+  },
 });
 
 const styles = StyleSheet.create({
