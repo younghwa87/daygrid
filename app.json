@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "daygrid-clone",
-    "slug": "daygrid-clone",
+    "name": "Datile",
+    "slug": "datile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -25,6 +25,8 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.younghwa87.datile",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
