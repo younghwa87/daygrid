@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, ScrollView, StyleSheet, Text, useColorScheme } from 'react-native';
+import { View, ScrollView, StyleSheet, Text } from 'react-native';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import dayjs from 'dayjs';
-import { COLORS, TIME_LABEL_WIDTH } from '../constants';
+import { TIME_LABEL_WIDTH } from '../constants';
 import { getEventSegments } from '../utils/timeUtils';
 import { calculateFreeBlocks } from '../utils/freeBlockCalculator';
 import { useSettingsStore } from '../store/settingsStore';
+import { useAppColors } from '../hooks/useAppColors';
 import { Schedule } from '../types';
 import EmptyBlock from './EmptyBlock';
 
@@ -21,8 +22,7 @@ type Props = {
 type GhostBlock = { startMins: number; endMins: number } | null;
 
 export default function TimeGrid({ schedules, selectedDate, onStartCreating, onEditSchedule }: Props) {
-  const scheme = useColorScheme();
-  const colors = scheme === 'dark' ? COLORS.dark : COLORS.light;
+  const { colors, isDark } = useAppColors();
   const { rowHeight, timeFormat, gridStartHour, gridEndHour, fontSize, textPosition } = useSettingsStore();
 
   const [scrollEnabled, setScrollEnabled] = useState(true);
@@ -34,7 +34,7 @@ export default function TimeGrid({ schedules, selectedDate, onStartCreating, onE
   const isCreatingRef = useRef(false);
   const ghostStartRef = useRef(0);
   const ghostEndRef = useRef(0);
-  const colWidthRef = useRef(0); // 클로저 stale 방지
+  const colWidthRef = useRef(0);
   const hitScheduleRef = useRef<Schedule | undefined>(undefined);
 
   const numRows = gridEndHour - gridStartHour;
@@ -66,7 +66,6 @@ export default function TimeGrid({ schedules, selectedDate, onStartCreating, onE
     return schedules.find((s) => !s.isOverflow && s.startTime <= mins && mins < s.endTime);
   }
 
-  // ── 롱프레스 후 드래그로 일정 생성, 롱프레스 후 손 떼면 편집
   const gesture = Gesture.Pan()
     .runOnJS(true)
     .activateAfterLongPress(400)
@@ -156,7 +155,6 @@ export default function TimeGrid({ schedules, selectedDate, onStartCreating, onE
     [schedules, gridStartHour, gridEndHour]
   );
 
-  // 현재 시간 칸의 빗금 위치 계산
   const hatchCell = useMemo(() => {
     if (!isToday || colWidth === 0) return null;
     const rowIndex = Math.floor(currentMins / 60) - gridStartHour;
@@ -172,7 +170,6 @@ export default function TimeGrid({ schedules, selectedDate, onStartCreating, onE
       showsVerticalScrollIndicator={false}
       scrollEnabled={scrollEnabled}
     >
-      {/* height: totalHeight → ScrollView가 전체 높이를 인식하고 함께 스크롤 */}
       <View style={[styles.row, { height: totalHeight }]}>
 
         {/* 시간 레이블 (좌측) */}
@@ -225,7 +222,7 @@ export default function TimeGrid({ schedules, selectedDate, onStartCreating, onE
               </View>
             ))}
 
-            {/* 여백 블록 (일정 아래 레이어) */}
+            {/* 여백 블록 */}
             {colWidth > 0 && freeBlocks.map((block) => (
               <EmptyBlock
                 key={block.id}
@@ -239,7 +236,7 @@ export default function TimeGrid({ schedules, selectedDate, onStartCreating, onE
             {/* 현재 시간 칸 빗금 */}
             {hatchCell && (() => {
               const stripeCount = Math.ceil((rowHeight + colWidth) / 8) + 4;
-              const hatchColor = scheme === 'dark' ? '#fff' : '#000';
+              const hatchColor = isDark ? '#fff' : '#000';
               return (
                 <View
                   pointerEvents="none"
@@ -298,7 +295,6 @@ export default function TimeGrid({ schedules, selectedDate, onStartCreating, onE
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  // height는 렌더링 시 totalHeight로 지정 → ScrollView 전체 높이 인식
   row: { flexDirection: 'row' },
   labelColumn: { flexDirection: 'column' },
   labelCell: { justifyContent: 'flex-start', paddingTop: 4, paddingHorizontal: 6, borderTopWidth: StyleSheet.hairlineWidth },

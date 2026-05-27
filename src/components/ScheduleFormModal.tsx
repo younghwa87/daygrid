@@ -7,14 +7,13 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  useColorScheme,
   KeyboardAvoidingView,
   Platform,
   Alert,
   Dimensions,
 } from 'react-native';
 import { Schedule, ColorCategory, RepeatType } from '../types';
-import { COLORS } from '../constants';
+import { useAppColors } from '../hooks/useAppColors';
 import { minutesToTimeString } from '../utils/timeUtils';
 import AlarmPicker from './AlarmPicker';
 
@@ -42,15 +41,14 @@ function TimeAdjuster({
   label,
   minutes,
   onChange,
-  colors,
   badge,
 }: {
   label: string;
   minutes: number;
   onChange: (m: number) => void;
-  colors: typeof COLORS.light;
   badge?: string;
 }) {
+  const { colors } = useAppColors();
   return (
     <View style={adjStyles.row}>
       <Text style={[adjStyles.label, { color: colors.textSecondary }]}>{label}</Text>
@@ -86,8 +84,7 @@ export default function ScheduleFormModal({
   onDelete,
   onCancel,
 }: Props) {
-  const scheme = useColorScheme();
-  const colors = scheme === 'dark' ? COLORS.dark : COLORS.light;
+  const { colors } = useAppColors();
   const isEditing = !!editingSchedule;
 
   const [title, setTitle] = useState('');
@@ -146,7 +143,6 @@ export default function ScheduleFormModal({
               )}
             </View>
 
-            {/* 스크롤 가능한 내용 */}
             <ScrollView
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
@@ -170,14 +166,12 @@ export default function ScheduleFormModal({
                   label="시작"
                   minutes={startMins}
                   onChange={(m) => setStartMins(Math.max(0, m))}
-                  colors={colors}
                 />
                 <View style={[styles.timeDivider, { backgroundColor: colors.border }]} />
                 <TimeAdjuster
                   label="종료"
                   minutes={endMins}
                   onChange={(m) => setEndMins(Math.min(30 * 60, m))}
-                  colors={colors}
                   badge={endMins >= 24 * 60 ? '+1 day' : undefined}
                 />
               </View>

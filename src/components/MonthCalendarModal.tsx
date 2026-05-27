@@ -5,10 +5,9 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  useColorScheme,
 } from 'react-native';
 import dayjs from 'dayjs';
-import { COLORS } from '../constants';
+import { useAppColors } from '../hooks/useAppColors';
 import { useScheduleStore } from '../store/scheduleStore';
 
 type Props = {
@@ -21,8 +20,7 @@ type Props = {
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
 export default function MonthCalendarModal({ visible, selectedDate, onSelectDate, onClose }: Props) {
-  const scheme = useColorScheme();
-  const colors = scheme === 'dark' ? COLORS.dark : COLORS.light;
+  const { colors } = useAppColors();
   const { getSchedulesByDate } = useScheduleStore();
 
   const [viewMonth, setViewMonth] = useState(() => dayjs(selectedDate).startOf('month'));

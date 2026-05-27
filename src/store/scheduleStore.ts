@@ -1,9 +1,10 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import { createMMKV } from 'react-native-mmkv';
 import dayjs from 'dayjs';
 import { Schedule, ColorCategory } from '../types';
 import { DEFAULT_COLOR_CATEGORIES } from '../constants';
 
-// 특정 날짜에 해당 일정이 표시돼야 하는지 판단
 function matchesRepeat(s: Schedule, date: string): boolean {
   if (s.exceptions?.includes(date)) return false;
   if (!s.repeat || s.repeat === 'none') return s.date === date;
@@ -34,70 +35,88 @@ type ScheduleStore = {
   removeColorCategory: (id: string) => void;
 };
 
-export const useScheduleStore = create<ScheduleStore>((set, get) => ({
-  schedules: [],
-  colorCategories: DEFAULT_COLOR_CATEGORIES as typeof DEFAULT_COLOR_CATEGORIES,
-  selectedDate: dayjs().format('YYYY-MM-DD'),
+const mmkv = createMMKV({ id: 'schedule-store' });
+const mmkvStorage = {
+  getItem: (key: string): string | null => mmkv.getString(key) ?? null,
+  setItem: (key: string, value: string): void => mmkv.set(key, value),
+  removeItem: (key: string): void => { mmkv.remove(key); },
+};
 
-  setSelectedDate: (date) => set({ selectedDate: date }),
+export const useScheduleStore = create<ScheduleStore>()(
+  persist(
+    (set, get) => ({
+      schedules: [],
+      colorCategories: DEFAULT_COLOR_CATEGORIES as typeof DEFAULT_COLOR_CATEGORIES,
+      selectedDate: dayjs().format('YYYY-MM-DD'),
 
-  addSchedule: (schedule) =>
-    set((state) => ({ schedules: [...state.schedules, schedule] })),
+      setSelectedDate: (date) => set({ selectedDate: date }),
 
-  updateSchedule: (id, updates) =>
-    set((state) => ({
-      schedules: state.schedules.map((s) => (s.id === id ? { ...s, ...updates } : s)),
-    })),
+      addSchedule: (schedule) =>
+        set((state) => ({ schedules: [...state.schedules, schedule] })),
 
-  removeSchedule: (id) =>
-    set((state) => ({ schedules: state.schedules.filter((s) => s.id !== id) })),
+      updateSchedule: (id, updates) =>
+        set((state) => ({
+          schedules: state.schedules.map((s) => (s.id === id ? { ...s, ...updates } : s)),
+        })),
 
-  addScheduleException: (id, date) =>
-    set((state) => ({
-      schedules: state.schedules.map((s) =>
-        s.id === id ? { ...s, exceptions: [...(s.exceptions ?? []), date] } : s
-      ),
-    })),
+      removeSchedule: (id) =>
+        set((state) => ({ schedules: state.schedules.filter((s) => s.id !== id) })),
 
-  getSchedulesByDate: (date) => {
-    const direct = get().schedules.filter((s) => matchesRepeat(s, date));
-    // 전날 자정 넘는 일정 → 오늘 그리드에 0시~(endTime-1440)으로 표시
-    const prevDate = dayjs(date).subtract(1, 'day').format('YYYY-MM-DD');
-    const overflow = get().schedules
-      .filter((s) => matchesRepeat(s, prevDate) && s.endTime > 24 * 60)
-      .map((s) => ({
-        ...s,
-        startTime: 0,
-        endTime: s.endTime - 24 * 60,
-        isOverflow: true,
-      }));
-    return [...direct, ...overflow];
-  },
+      addScheduleException: (id, date) =>
+        set((state) => ({
+          schedules: state.schedules.map((s) =>
+            s.id === id ? { ...s, exceptions: [...(s.exceptions ?? []), date] } : s
+          ),
+        })),
 
-  // 겹침 여부 확인 (전날 자정 넘는 일정 포함)
-  hasOverlap: (startTime, endTime, date, excludeId) => {
-    const schedules = get().schedules;
-    const direct = schedules.filter((s) => s.id !== excludeId && matchesRepeat(s, date));
-    if (direct.some((s) => startTime < s.endTime && s.startTime < endTime)) return true;
-    const prevDate = dayjs(date).subtract(1, 'day').format('YYYY-MM-DD');
-    const overflow = schedules.filter(
-      (s) => s.id !== excludeId && matchesRepeat(s, prevDate) && s.endTime > 24 * 60
-    );
-    return overflow.some((s) => startTime < s.endTime - 24 * 60 && 0 < endTime);
-  },
+      getSchedulesByDate: (date) => {
+        const direct = get().schedules.filter((s) => matchesRepeat(s, date));
+        const prevDate = dayjs(date).subtract(1, 'day').format('YYYY-MM-DD');
+        const overflow = get().schedules
+          .filter((s) => matchesRepeat(s, prevDate) && s.endTime > 24 * 60)
+          .map((s) => ({
+            ...s,
+            startTime: 0,
+            endTime: s.endTime - 24 * 60,
+            isOverflow: true,
+          }));
+        return [...direct, ...overflow];
+      },
 
-  addColorCategory: (category) =>
-    set((state) => ({ colorCategories: [...state.colorCategories, category] })),
+      hasOverlap: (startTime, endTime, date, excludeId) => {
+        const schedules = get().schedules;
+        const direct = schedules.filter((s) => s.id !== excludeId && matchesRepeat(s, date));
+        if (direct.some((s) => startTime < s.endTime && s.startTime < endTime)) return true;
+        const prevDate = dayjs(date).subtract(1, 'day').format('YYYY-MM-DD');
+        const overflow = schedules.filter(
+          (s) => s.id !== excludeId && matchesRepeat(s, prevDate) && s.endTime > 24 * 60
+        );
+        return overflow.some((s) => startTime < s.endTime - 24 * 60 && 0 < endTime);
+      },
 
-  updateColorCategory: (id, updates) =>
-    set((state) => ({
-      colorCategories: state.colorCategories.map((c) =>
-        c.id === id ? { ...c, ...updates } : c
-      ),
-    })),
+      addColorCategory: (category) =>
+        set((state) => ({ colorCategories: [...state.colorCategories, category] })),
 
-  removeColorCategory: (id) =>
-    set((state) => ({
-      colorCategories: state.colorCategories.filter((c) => c.id !== id),
-    })),
-}));
+      updateColorCategory: (id, updates) =>
+        set((state) => ({
+          colorCategories: state.colorCategories.map((c) =>
+            c.id === id ? { ...c, ...updates } : c
+          ),
+        })),
+
+      removeColorCategory: (id) =>
+        set((state) => ({
+          colorCategories: state.colorCategories.filter((c) => c.id !== id),
+        })),
+    }),
+    {
+      name: 'schedules',
+      storage: createJSONStorage(() => mmkvStorage),
+      // selectedDate는 앱 시작 시 항상 오늘 날짜로 초기화되어야 하므로 제외
+      partialize: (state) => ({
+        schedules: state.schedules,
+        colorCategories: state.colorCategories,
+      }),
+    }
+  )
+);

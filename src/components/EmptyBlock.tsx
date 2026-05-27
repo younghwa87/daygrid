@@ -4,30 +4,28 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  useColorScheme,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import BreathingAnimation from './animations/BreathingAnimation';
+import { useAppColors } from '../hooks/useAppColors';
 import { FreeBlock } from '../types';
 
 interface Props {
   freeBlock: FreeBlock;
-  rowHeight: number;       // 시간당 픽셀 높이
-  gridStartMin: number;    // 그리드 시작 시각(분)
+  rowHeight: number;
+  gridStartMin: number;
   onPressAdd: (startMin: number, endMin: number) => void;
 }
 
 export default function EmptyBlock({ freeBlock, rowHeight, gridStartMin, onPressAdd }: Props) {
-  const scheme = useColorScheme();
-  const isDark = scheme === 'dark';
+  const { isDark } = useAppColors();
 
   const top = ((freeBlock.startMin - gridStartMin) / 60) * rowHeight;
   const height = freeBlock.durationHours * rowHeight;
-  const showAddBtn = height >= 36; // 충분한 높이일 때만 + 버튼 표시
+  const showAddBtn = height >= 36;
 
   const outerStyle = [s.block, { top, height }];
 
-  // + 버튼
   const addBtn = showAddBtn ? (
     <TouchableOpacity
       style={s.addBtn}
@@ -38,7 +36,6 @@ export default function EmptyBlock({ freeBlock, rowHeight, gridStartMin, onPress
     </TouchableOpacity>
   ) : null;
 
-  // ── micro ─────────────────────────────────────────
   if (freeBlock.quality === 'micro') {
     return (
       <View
@@ -50,7 +47,6 @@ export default function EmptyBlock({ freeBlock, rowHeight, gridStartMin, onPress
     );
   }
 
-  // ── short ─────────────────────────────────────────
   if (freeBlock.quality === 'short') {
     return (
       <View style={outerStyle} pointerEvents="box-none">
@@ -68,7 +64,6 @@ export default function EmptyBlock({ freeBlock, rowHeight, gridStartMin, onPress
     );
   }
 
-  // ── medium ─────────────────────────────────────────
   if (freeBlock.quality === 'medium') {
     const gradColors = isDark
       ? (['#0D2018', '#0D1B2A'] as const)
@@ -89,7 +84,6 @@ export default function EmptyBlock({ freeBlock, rowHeight, gridStartMin, onPress
     );
   }
 
-  // ── long ──────────────────────────────────────────
   const gradColors = isDark
     ? (['#0D2018', '#0D1B2A', '#1A0D2E'] as const)
     : (['#ECFDF5', '#EFF6FF', '#F5F3FF'] as const);
@@ -116,8 +110,6 @@ const s = StyleSheet.create({
     right: 0,
     overflow: 'hidden',
   },
-
-  // micro
   micro: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
@@ -128,8 +120,6 @@ const s = StyleSheet.create({
     backgroundColor: '#1C1C1E',
     borderColor: '#3A3A3A',
   },
-
-  // short 배경 (BreathingAnimation으로 opacity 애니메이션)
   short: {
     backgroundColor: '#F0FDF9',
     borderWidth: 0.5,
@@ -139,8 +129,6 @@ const s = StyleSheet.create({
     backgroundColor: '#0D2018',
     borderColor: '#1A3A28',
   },
-
-  // 라벨 레이아웃
   contentRow: {
     flex: 1,
     flexDirection: 'row',
@@ -154,55 +142,16 @@ const s = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
-
-  // short 텍스트
-  shortLabel: {
-    fontSize: 12,
-    color: '#6EE7B7',
-    fontWeight: '500',
-  },
-  shortLabelDark: {
-    color: '#34D399',
-  },
-
-  // medium 텍스트
-  mediumLabel: {
-    fontSize: 13,
-    color: '#34D399',
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  mediumLabelDark: {
-    color: '#6EE7B7',
-  },
-  mediumSub: {
-    fontSize: 11,
-    color: '#A7F3D0',
-  },
-  mediumSubDark: {
-    color: '#6EE7B7',
-    opacity: 0.7,
-  },
-
-  // long 텍스트
-  longLabel: {
-    fontSize: 14,
-    color: '#10B981',
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  longLabelDark: {
-    color: '#34D399',
-  },
-  longSub: {
-    fontSize: 12,
-    color: '#6EE7B7',
-  },
-  longSubDark: {
-    color: '#A7F3D0',
-  },
-
-  // + 버튼
+  shortLabel: { fontSize: 12, color: '#6EE7B7', fontWeight: '500' },
+  shortLabelDark: { color: '#34D399' },
+  mediumLabel: { fontSize: 13, color: '#34D399', fontWeight: '600', marginBottom: 2 },
+  mediumLabelDark: { color: '#6EE7B7' },
+  mediumSub: { fontSize: 11, color: '#A7F3D0' },
+  mediumSubDark: { color: '#6EE7B7', opacity: 0.7 },
+  longLabel: { fontSize: 14, color: '#10B981', fontWeight: '700', marginBottom: 2 },
+  longLabelDark: { color: '#34D399' },
+  longSub: { fontSize: 12, color: '#6EE7B7' },
+  longSubDark: { color: '#A7F3D0' },
   addBtn: {
     position: 'absolute',
     bottom: 6,
@@ -214,13 +163,6 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  addBtnText: {
-    fontSize: 14,
-    color: '#34D399',
-    lineHeight: 18,
-    fontWeight: '600',
-  },
-  addBtnTextDark: {
-    color: '#6EE7B7',
-  },
+  addBtnText: { fontSize: 14, color: '#34D399', lineHeight: 18, fontWeight: '600' },
+  addBtnTextDark: { color: '#6EE7B7' },
 });

@@ -7,11 +7,10 @@ import {
   SafeAreaView,
   ScrollView,
   TouchableOpacity,
-  useColorScheme,
 } from 'react-native';
 import dayjs from 'dayjs';
-import { COLORS } from '../constants';
 import { useScheduleStore } from '../store/scheduleStore';
+import { useAppColors } from '../hooks/useAppColors';
 import { Schedule } from '../types';
 
 type Props = {
@@ -20,7 +19,6 @@ type Props = {
   onDayPress: (date: string) => void;
 };
 
-// ── 밀도별 색상 ──────────────────────────────────────────
 const DENSITY_LIGHT = ['#F8F8F8', '#C8E6C9', '#66BB6A', '#F57C00', '#D32F2F'];
 const DENSITY_DARK  = ['#1A1A1A', '#1B5E20', '#388E3C', '#E65100', '#B71C1C'];
 const LEGEND_LABELS = ['여유', '가벼움', '보통', '바쁨', '과부하'];
@@ -29,13 +27,11 @@ const HOURS         = Array.from({ length: 24 }, (_, i) => i);
 const TIME_W        = 32;
 const CELL_H        = 22;
 
-// 이번 주 월요일 계산
 function toMonday(d: dayjs.Dayjs): dayjs.Dayjs {
-  const dow = d.day(); // 0=일
+  const dow = d.day();
   return d.add(dow === 0 ? -6 : 1 - dow, 'day').startOf('day');
 }
 
-// 셀 밀도 계산: density = min(4, floor(count + 겹침분/60))
 function calcDensity(daySchedules: Schedule[], hour: number): number {
   const s0 = hour * 60;
   const s1 = s0 + 60;
@@ -48,7 +44,6 @@ function calcDensity(daySchedules: Schedule[], hour: number): number {
   return Math.min(4, Math.floor(hits.length + overlap / 60));
 }
 
-// ── 히트맵 셀 (React.memo로 최적화) ──────────────────────
 const HeatmapCell = React.memo(function HeatmapCell({
   density,
   isDark,
@@ -71,7 +66,6 @@ const cs = StyleSheet.create({
   cell: { flex: 1, height: CELL_H, borderWidth: StyleSheet.hairlineWidth, borderColor: 'transparent' },
 });
 
-// ── 요약 항목 ────────────────────────────────────────────
 function SummaryItem({ label, value, text, sub }: { label: string; value: string; text: string; sub: string }) {
   return (
     <View style={si.wrap}>
@@ -86,11 +80,8 @@ const si = StyleSheet.create({
   value: { fontSize: 15, fontWeight: '600' },
 });
 
-// ── 메인 화면 ─────────────────────────────────────────────
 export default function WeeklyHeatmapScreen({ visible, onClose, onDayPress }: Props) {
-  const scheme = useColorScheme();
-  const isDark = scheme === 'dark';
-  const colors = isDark ? COLORS.dark : COLORS.light;
+  const { colors, isDark } = useAppColors();
   const { getSchedulesByDate, schedules } = useScheduleStore();
 
   const [weekStart, setWeekStart] = useState(() => toMonday(dayjs()));
@@ -101,21 +92,17 @@ export default function WeeklyHeatmapScreen({ visible, onClose, onDayPress }: Pr
     [weekStart]
   );
 
-  // 요일별 일정 목록 (반복 일정 포함)
   const weekSchedules = useMemo(
     () => weekDays.map(d => getSchedulesByDate(d.format('YYYY-MM-DD'))),
-    // schedules 변경 시도 재계산
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [weekDays, schedules]
   );
 
-  // 밀도 행렬 [hour][dayIdx]
   const matrix = useMemo(
     () => HOURS.map(h => weekSchedules.map(ds => calcDensity(ds, h))),
     [weekSchedules]
   );
 
-  // 주간 요약 계산
   const summary = useMemo(() => {
     const dayMins = weekSchedules.map(ds =>
       ds.reduce((sum, s) => sum + Math.max(0, s.endTime - s.startTime), 0)
@@ -172,7 +159,7 @@ export default function WeeklyHeatmapScreen({ visible, onClose, onDayPress }: Pr
                 <TouchableOpacity
                   key={i}
                   style={styles.dayHeaderCell}
-                  onPress={() => { onDayPress(dateStr); onClose(); }}
+                  onPress={() => onDayPress(dateStr)}
                 >
                   <Text style={[styles.dayName, { color }]}>{DAY_LABELS[i]}</Text>
                   <View style={[styles.dayCircle, isToday && styles.todayCircle]}>
@@ -189,19 +176,17 @@ export default function WeeklyHeatmapScreen({ visible, onClose, onDayPress }: Pr
           <View style={[styles.grid, { borderColor: colors.border }]}>
             {HOURS.map(hour => (
               <View key={hour} style={styles.gridRow}>
-                {/* 시간 레이블 */}
                 <View style={[styles.timeCell, { width: TIME_W, borderRightColor: colors.border }]}>
                   <Text style={[styles.timeLabel, { color: colors.textSecondary }]}>
                     {String(hour).padStart(2, '0')}
                   </Text>
                 </View>
-                {/* 셀 7개 */}
                 {weekDays.map((d, di) => (
                   <HeatmapCell
                     key={di}
                     density={matrix[hour][di]}
                     isDark={isDark}
-                    onPress={() => { onDayPress(d.format('YYYY-MM-DD')); onClose(); }}
+                    onPress={() => onDayPress(d.format('YYYY-MM-DD'))}
                   />
                 ))}
               </View>
@@ -263,8 +248,6 @@ export default function WeeklyHeatmapScreen({ visible, onClose, onDayPress }: Pr
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-
-  // 헤더
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -278,8 +261,6 @@ const styles = StyleSheet.create({
   weekNavBtn: { padding: 6 },
   navArrow:   { fontSize: 22, lineHeight: 24 },
   weekLabel:  { fontSize: 14, fontWeight: '700' },
-
-  // 요일 헤더
   dayHeaderRow: {
     flexDirection: 'row',
     paddingVertical: 8,
@@ -290,14 +271,10 @@ const styles = StyleSheet.create({
   dayCircle:     { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
   todayCircle:   { backgroundColor: '#4A90D9' },
   dayDate:       { fontSize: 13, fontWeight: '500' },
-
-  // 그리드
   grid: { borderTopWidth: StyleSheet.hairlineWidth },
   gridRow: { flexDirection: 'row', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#00000008' },
   timeCell: { justifyContent: 'center', alignItems: 'flex-end', paddingRight: 4, borderRightWidth: StyleSheet.hairlineWidth },
   timeLabel: { fontSize: 9 },
-
-  // 범례
   legend: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -309,8 +286,6 @@ const styles = StyleSheet.create({
   legendItem:   { flexDirection: 'row', alignItems: 'center', gap: 4 },
   legendSwatch: { width: 12, height: 12, borderRadius: 3 },
   legendLabel:  { fontSize: 10 },
-
-  // 요약 카드
   summaryCard: {
     margin: 16,
     borderRadius: 14,

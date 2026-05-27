@@ -1,13 +1,12 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   Switch,
   TouchableOpacity,
   StyleSheet,
-  useColorScheme,
 } from 'react-native';
-import { COLORS } from '../constants';
+import { useAppColors } from '../hooks/useAppColors';
 
 type Props = {
   selectedOffsets: number[];
@@ -23,74 +22,59 @@ const OPTIONS = [
 ];
 
 export default function AlarmPicker({ selectedOffsets, onChange }: Props) {
-  const scheme = useColorScheme();
-  const colors = scheme === 'dark' ? COLORS.dark : COLORS.light;
+  const { colors } = useAppColors();
 
   const enabled = selectedOffsets.length > 0;
-  const [open, setOpen] = useState(false);
 
-  const selectedValue = enabled ? selectedOffsets[0] : null;
-  const selectedLabel = OPTIONS.find(o => o.value === selectedValue)?.label ?? '정시';
+  const handleMasterToggle = (val: boolean) => {
+    onChange(val ? [-5] : []);
+  };
 
-  const handleEnable = (val: boolean) => {
-    if (val) {
-      onChange([0]);
-    } else {
-      onChange([]);
-      setOpen(false);
-    }
+  const handleToggleOption = (value: number) => {
+    const next = selectedOffsets.includes(value)
+      ? selectedOffsets.filter((v) => v !== value)
+      : [...selectedOffsets, value];
+    // 알림이 하나도 없으면 비활성화
+    onChange(next);
   };
 
   return (
     <View style={[s.container, { borderColor: colors.border }]}>
+      {/* 마스터 토글 */}
       <View style={s.headerRow}>
         <Text style={[s.label, { color: colors.text }]}>알림</Text>
         <Switch
           value={enabled}
-          onValueChange={handleEnable}
+          onValueChange={handleMasterToggle}
           trackColor={{ false: colors.border, true: '#4A90D9' }}
           thumbColor="#fff"
         />
       </View>
 
+      {/* 옵션 목록 (복수 선택) */}
       {enabled && (
-        <>
-          <View style={[s.divider, { backgroundColor: colors.border }]} />
-          <TouchableOpacity
-            style={s.selector}
-            onPress={() => setOpen(v => !v)}
-            activeOpacity={0.7}
-          >
-            <Text style={[s.selectorText, { color: colors.text }]}>{selectedLabel}</Text>
-            <Text style={[s.arrow, { color: colors.textSecondary }]}>
-              {open ? '▲' : '▼'}
-            </Text>
-          </TouchableOpacity>
-
-          {open && (
-            <View style={[s.dropdown, { borderTopColor: colors.border }]}>
-              {OPTIONS.map((opt, i) => (
-                <TouchableOpacity
-                  key={opt.value}
-                  style={[
-                    s.option,
-                    i < OPTIONS.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
-                    selectedValue === opt.value && s.optionSelected,
-                  ]}
-                  onPress={() => {
-                    onChange([opt.value]);
-                    setOpen(false);
-                  }}
-                >
-                  <Text style={[s.optionText, { color: selectedValue === opt.value ? '#4A90D9' : colors.text }]}>
-                    {opt.label}
-                  </Text>
-                  {selectedValue === opt.value && <Text style={s.check}>✓</Text>}
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-        </>
+        <View style={[s.optionList, { borderTopColor: colors.border }]}>
+          {OPTIONS.map((opt, i) => {
+            const selected = selectedOffsets.includes(opt.value);
+            return (
+              <TouchableOpacity
+                key={opt.value}
+                style={[
+                  s.option,
+                  i < OPTIONS.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
+                  selected && { backgroundColor: '#4A90D911' },
+                ]}
+                onPress={() => handleToggleOption(opt.value)}
+                activeOpacity={0.7}
+              >
+                <Text style={[s.optionText, { color: selected ? '#4A90D9' : colors.text }]}>
+                  {opt.label}
+                </Text>
+                {selected && <Text style={s.check}>✓</Text>}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       )}
     </View>
   );
@@ -110,17 +94,7 @@ const s = StyleSheet.create({
     paddingVertical: 10,
   },
   label: { fontSize: 14, fontWeight: '600' },
-  divider: { height: StyleSheet.hairlineWidth },
-  selector: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
-  selectorText: { fontSize: 14 },
-  arrow: { fontSize: 12 },
-  dropdown: {
+  optionList: {
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   option: {
@@ -130,7 +104,6 @@ const s = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
-  optionSelected: { backgroundColor: '#EEF2FF' },
   optionText: { fontSize: 14 },
   check: { fontSize: 14, color: '#4A90D9', fontWeight: '700' },
 });

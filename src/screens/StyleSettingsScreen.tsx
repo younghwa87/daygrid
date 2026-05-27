@@ -8,12 +8,11 @@ import {
   TouchableOpacity,
   ScrollView,
   TextInput,
-  useColorScheme,
+  Switch,
   Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { COLORS } from '../constants';
 import {
   useSettingsStore,
   BlockSize,
@@ -22,13 +21,13 @@ import {
   TextPosition,
   ROW_HEIGHTS,
 } from '../store/settingsStore';
+import { useAppColors } from '../hooks/useAppColors';
 import { useScheduleStore } from '../store/scheduleStore';
 import { ColorCategory } from '../types';
 import uuid from '../utils/uuid';
 
 type Props = { visible: boolean; onClose: () => void };
 
-// 프리셋 팔레트
 const PRESET_COLORS = [
   '#E05555','#E07C2A','#D4B800','#4CAF50',
   '#4A90D9','#7B5EA7','#E0668A','#8E8E8E',
@@ -39,8 +38,7 @@ const PRESET_COLORS = [
 function SegCtrl<T extends string>({
   options, value, onChange, labelMap,
 }: { options: T[]; value: T; onChange: (v: T) => void; labelMap: Record<T, string> }) {
-  const scheme = useColorScheme();
-  const colors = scheme === 'dark' ? COLORS.dark : COLORS.light;
+  const { colors } = useAppColors();
   return (
     <View style={[sc.wrap, { backgroundColor: colors.background }]}>
       {options.map((opt) => (
@@ -66,8 +64,7 @@ const sc = StyleSheet.create({
 
 // ──────────── 설정 행 ────────────
 function SettingRow({ label, children, last = false }: { label: string; children: React.ReactNode; last?: boolean }) {
-  const scheme = useColorScheme();
-  const colors = scheme === 'dark' ? COLORS.dark : COLORS.light;
+  const { colors } = useAppColors();
   return (
     <View style={[row.wrap, !last && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }]}>
       <Text style={[row.label, { color: colors.text }]}>{label}</Text>
@@ -86,8 +83,7 @@ function CategoryEditModal({
   onSave,
   onClose,
 }: { category: ColorCategory | null; onSave: (cat: ColorCategory) => void; onClose: () => void }) {
-  const scheme = useColorScheme();
-  const colors = scheme === 'dark' ? COLORS.dark : COLORS.light;
+  const { colors } = useAppColors();
   const [label, setLabel] = useState(category?.label ?? '');
   const [color, setColor] = useState(category?.color ?? PRESET_COLORS[0]);
 
@@ -99,42 +95,41 @@ function CategoryEditModal({
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={catEdit.keyboardView}
       >
-      <View style={[catEdit.box, { backgroundColor: colors.surface }]}>
-        <Text style={[catEdit.title, { color: colors.text }]}>카테고리 편집</Text>
+        <View style={[catEdit.box, { backgroundColor: colors.surface }]}>
+          <Text style={[catEdit.title, { color: colors.text }]}>카테고리 편집</Text>
 
-        <TextInput
-          style={[catEdit.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}
-          value={label}
-          onChangeText={setLabel}
-          placeholder="카테고리 이름"
-          placeholderTextColor={colors.textSecondary}
-          autoFocus
-        />
+          <TextInput
+            style={[catEdit.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}
+            value={label}
+            onChangeText={setLabel}
+            placeholder="카테고리 이름"
+            placeholderTextColor={colors.textSecondary}
+            autoFocus
+          />
 
-        {/* 색상 팔레트 */}
-        <View style={catEdit.palette}>
-          {PRESET_COLORS.map((c) => (
+          <View style={catEdit.palette}>
+            {PRESET_COLORS.map((c) => (
+              <TouchableOpacity
+                key={c}
+                onPress={() => setColor(c)}
+                style={[catEdit.colorDot, { backgroundColor: c }, color === c && catEdit.colorDotSelected]}
+              />
+            ))}
+          </View>
+
+          <View style={catEdit.buttons}>
+            <TouchableOpacity style={[catEdit.btn, { borderColor: colors.border }]} onPress={onClose}>
+              <Text style={{ color: colors.textSecondary, fontWeight: '600' }}>취소</Text>
+            </TouchableOpacity>
             <TouchableOpacity
-              key={c}
-              onPress={() => setColor(c)}
-              style={[catEdit.colorDot, { backgroundColor: c }, color === c && catEdit.colorDotSelected]}
-            />
-          ))}
+              style={[catEdit.btn, catEdit.saveBtn, { opacity: label.trim() ? 1 : 0.4 }]}
+              onPress={() => { if (label.trim()) onSave({ ...category, label: label.trim(), color }); }}
+              disabled={!label.trim()}
+            >
+              <Text style={{ color: '#fff', fontWeight: '600' }}>저장</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-
-        <View style={catEdit.buttons}>
-          <TouchableOpacity style={[catEdit.btn, { borderColor: colors.border }]} onPress={onClose}>
-            <Text style={{ color: colors.textSecondary, fontWeight: '600' }}>취소</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[catEdit.btn, catEdit.saveBtn, { opacity: label.trim() ? 1 : 0.4 }]}
-            onPress={() => { if (label.trim()) onSave({ ...category, label: label.trim(), color }); }}
-            disabled={!label.trim()}
-          >
-            <Text style={{ color: '#fff', fontWeight: '600' }}>저장</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
       </KeyboardAvoidingView>
     </Modal>
   );
@@ -156,9 +151,8 @@ const catEdit = StyleSheet.create({
 // ──────────── 미니 프리뷰 ────────────
 function GridPreview() {
   const { blockSize, timeFormat, textPosition, fontSize } = useSettingsStore();
+  const { colors } = useAppColors();
   const rowH = ROW_HEIGHTS[blockSize];
-  const scheme = useColorScheme();
-  const colors = scheme === 'dark' ? COLORS.dark : COLORS.light;
   const labels = timeFormat === '12h' ? ['11 AM', '12 PM', '1 PM'] : ['11:00', '12:00', '13:00'];
   return (
     <View style={[prev.wrap, { backgroundColor: colors.background }]}>
@@ -187,9 +181,12 @@ const prev = StyleSheet.create({
 
 // ──────────── 메인 화면 ────────────
 export default function StyleSettingsScreen({ visible, onClose }: Props) {
-  const scheme = useColorScheme();
-  const colors = scheme === 'dark' ? COLORS.dark : COLORS.light;
-  const { blockSize, timeFormat, textSize, textPosition, setBlockSize, setTimeFormat, setTextSize, setTextPosition } = useSettingsStore();
+  const { colors, isDark } = useAppColors();
+  const {
+    blockSize, timeFormat, textSize, textPosition,
+    darkMode, setDarkMode,
+    setBlockSize, setTimeFormat, setTextSize, setTextPosition,
+  } = useSettingsStore();
   const { colorCategories, addColorCategory, updateColorCategory, removeColorCategory, schedules } = useScheduleStore();
   const [editingCat, setEditingCat] = useState<ColorCategory | null>(null);
 
@@ -228,8 +225,16 @@ export default function StyleSettingsScreen({ visible, onClose }: Props) {
         <ScrollView>
           <GridPreview />
 
-          {/* 블록 & 텍스트 설정 */}
+          {/* 화면 설정 */}
           <View style={[styles.section, { backgroundColor: colors.surface }]}>
+            <SettingRow label="다크 모드">
+              <Switch
+                value={darkMode}
+                onValueChange={setDarkMode}
+                trackColor={{ false: colors.border, true: '#4A90D9' }}
+                thumbColor="#fff"
+              />
+            </SettingRow>
             <SettingRow label="사이즈">
               <SegCtrl<BlockSize> options={['small','medium','large']} value={blockSize} onChange={setBlockSize} labelMap={{ small:'작게', medium:'보통', large:'크게' }} />
             </SettingRow>
@@ -273,7 +278,6 @@ export default function StyleSettingsScreen({ visible, onClose }: Props) {
         </ScrollView>
       </SafeAreaView>
 
-      {/* 카테고리 편집 모달 */}
       <CategoryEditModal
         key={editingCat?.id ?? 'none'}
         category={editingCat}
