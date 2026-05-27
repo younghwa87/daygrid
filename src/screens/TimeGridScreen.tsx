@@ -36,6 +36,7 @@ export default function TimeGridScreen() {
   const insets = useSafeAreaInsets();
 
   const {
+    schedules: allSchedules,
     selectedDate,
     setSelectedDate,
     getSchedulesByDate,
@@ -67,16 +68,20 @@ export default function TimeGridScreen() {
   }, []);
 
   const handleEditSchedule = useCallback((schedule: Schedule) => {
-    if (schedule.repeat === 'none') {
-      setModalState({ mode: 'edit', schedule, editScope: 'all' });
+    const original = schedule.isOverflow
+      ? (allSchedules.find((s) => s.id === schedule.id) ?? schedule)
+      : schedule;
+
+    if (original.repeat === 'none') {
+      setModalState({ mode: 'edit', schedule: original, editScope: 'all' });
       return;
     }
     Alert.alert('반복 일정', '어떤 일정을 수정할까요?', [
       { text: '취소', style: 'cancel' },
-      { text: '이 날짜만', onPress: () => setModalState({ mode: 'edit', schedule, editScope: 'this' }) },
-      { text: '모든 반복 일정', onPress: () => setModalState({ mode: 'edit', schedule, editScope: 'all' }) },
+      { text: '이 날짜만', onPress: () => setModalState({ mode: 'edit', schedule: original, editScope: 'this' }) },
+      { text: '모든 반복 일정', onPress: () => setModalState({ mode: 'edit', schedule: original, editScope: 'all' }) },
     ]);
-  }, []);
+  }, [allSchedules]);
 
   const handleConfirm = useCallback(
     (data: { title: string; colorCategory: ColorCategory; startTime: number; endTime: number; repeat: RepeatType; repeatDays: number[]; reminderOffsets: number[]; scheduleType: ScheduleType }) => {

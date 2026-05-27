@@ -63,7 +63,7 @@ export default function TimeGrid({ schedules, selectedDate, onStartCreating, onE
 
   function findScheduleAt(x: number, y: number): Schedule | undefined {
     const mins = posToMins(x, y);
-    return schedules.find((s) => !s.isOverflow && s.startTime <= mins && mins < s.endTime);
+    return schedules.find((s) => s.startTime <= mins && mins < s.endTime);
   }
 
   const gesture = Gesture.Pan()
