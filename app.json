@@ -41,6 +41,12 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "acc3f81d-02d7-46ab-b17d-d25faeebddcc"
+      }
+    },
+    "owner": "younghwa87"
   }
 }

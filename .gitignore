@@ -42,3 +42,6 @@ yarn-error.*
 
 # 문서 메모
 *.md
+
+# Google Play 서비스 계정 키 (민감 정보)
+google-service-account.json
