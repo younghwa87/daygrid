@@ -89,7 +89,13 @@ export default function TimeGridScreen() {
 
       const excludeId = modalState.mode === 'edit' ? modalState.schedule.id : undefined;
 
-      if (hasOverlap(data.startTime, data.endTime, selectedDate, excludeId)) {
+      // 원본 일정 수정 시 원본 날짜 기준으로 겹침 검사 (오버플로우 편집 대응)
+      const overlapCheckDate =
+        modalState.mode === 'edit' && modalState.editScope === 'all'
+          ? modalState.schedule.date
+          : selectedDate;
+
+      if (hasOverlap(data.startTime, data.endTime, overlapCheckDate, excludeId)) {
         Alert.alert('시간 겹침', '같은 시간대에 다른 일정이 있습니다.\n시간을 조정해주세요.');
         return;
       }
