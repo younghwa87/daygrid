@@ -39,7 +39,7 @@ export const useSettingsStore = create<SettingsStore>((set) => ({
   textSize: "medium",
   textPosition: "left",
   gridStartHour: 0,
-  gridEndHour: 23,
+  gridEndHour: 24,
   rowHeight: ROW_HEIGHTS.medium,
   fontSize: TEXT_SIZES.medium,
 
