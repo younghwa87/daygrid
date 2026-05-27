@@ -232,7 +232,7 @@ export default function TimeGridScreen() {
       <View style={[styles.bottomBar, { borderTopColor: colors.border, backgroundColor: colors.background }]}>
         <Text style={[styles.clockText, { color: colors.textSecondary }]}>{nowStr}</Text>
         <TouchableOpacity style={styles.calButton} onPress={() => setHeatmapVisible(true)}>
-          <Text style={{ fontSize: 18 }}>📊</Text>
+          <Text style={{ fontSize: 18 }}>🗓️</Text>
         </TouchableOpacity>
       </View>
 
