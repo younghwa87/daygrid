@@ -45,13 +45,15 @@ function toMonday(d: dayjs.Dayjs): dayjs.Dayjs {
 function calcDensity(daySchedules: Schedule[], hour: number): number {
   const s0 = hour * 60;
   const s1 = s0 + 60;
-  const hits = daySchedules.filter(s => s.startTime < s1 && s.endTime > s0);
-  if (!hits.length) return 0;
-  const overlap = hits.reduce(
+  const occupied = daySchedules.reduce(
     (sum, s) => sum + Math.max(0, Math.min(s.endTime, s1) - Math.max(s.startTime, s0)),
     0
   );
-  return Math.min(4, Math.floor(hits.length + overlap / 60));
+  if (occupied === 0) return 0;
+  if (occupied <= 15) return 1; // 가벼움
+  if (occupied <= 30) return 2; // 보통
+  if (occupied <= 45) return 3; // 바쁨
+  return 4;                      // 과부하
 }
 
 const HeatmapCell = React.memo(function HeatmapCell({
