@@ -7,8 +7,17 @@ import {
   StyleSheet,
 } from 'react-native';
 import dayjs from 'dayjs';
+import Holidays from 'date-holidays';
 import { useAppColors } from '../hooks/useAppColors';
 import { useScheduleStore } from '../store/scheduleStore';
+
+const hd = new Holidays('KR');
+
+function isPublicHoliday(dateStr: string): boolean {
+  const result = hd.isHoliday(new Date(dateStr));
+  if (!result) return false;
+  return (result as any[]).some((h: any) => h.type === 'public');
+}
 
 type Props = {
   visible: boolean;
@@ -92,11 +101,12 @@ export default function MonthCalendarModal({ visible, selectedDate, onSelectDate
             const isSelected = date === selectedDate;
             const hasSchedule = datesWithSchedule.has(date);
             const dow = dayjs(date).day();
+            const isHoliday = isPublicHoliday(date);
             const textColor = isSelected
               ? '#fff'
               : isToday
               ? '#4A90D9'
-              : dow === 0
+              : dow === 0 || isHoliday
               ? '#E05555'
               : dow === 6
               ? '#4A90D9'
