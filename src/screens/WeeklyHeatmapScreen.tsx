@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
@@ -95,7 +95,7 @@ export default function WeeklyHeatmapScreen({ visible, onClose, onDayPress }: Pr
   const insets = useSafeAreaInsets();
   const { getSchedulesByDate, schedules } = useScheduleStore();
 
-  const [weekStart, setWeekStart] = useState(() => toMonday(dayjs()));
+  const weekStart = useMemo(() => toMonday(dayjs()), []);
   const today = dayjs().format('YYYY-MM-DD');
 
   const weekDays = useMemo(
@@ -145,15 +145,7 @@ export default function WeeklyHeatmapScreen({ visible, onClose, onDayPress }: Pr
           <TouchableOpacity onPress={onClose} style={styles.sideBtn}>
             <Text style={styles.closeTxt}>‹</Text>
           </TouchableOpacity>
-          <View style={styles.weekNav}>
-            <TouchableOpacity onPress={() => setWeekStart(w => w.subtract(7, 'day'))} style={styles.weekNavBtn}>
-              <Text style={[styles.navArrow, { color: colors.text }]}>‹</Text>
-            </TouchableOpacity>
-            <Text style={[styles.weekLabel, { color: colors.text }]}>{weekLabel}</Text>
-            <TouchableOpacity onPress={() => setWeekStart(w => w.add(7, 'day'))} style={styles.weekNavBtn}>
-              <Text style={[styles.navArrow, { color: colors.text }]}>›</Text>
-            </TouchableOpacity>
-          </View>
+          <Text style={[styles.weekLabel, { color: colors.text }]}>{weekLabel}</Text>
           <View style={styles.sideBtn} />
         </View>
 
@@ -271,12 +263,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  sideBtn:    { width: 44 },
-  closeTxt:   { fontSize: 24, lineHeight: 26, color: '#4A90D9' },
-  weekNav:    { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 },
-  weekNavBtn: { padding: 6 },
-  navArrow:   { fontSize: 22, lineHeight: 24 },
-  weekLabel:  { fontSize: 14, fontWeight: '700' },
+  sideBtn:   { width: 44 },
+  closeTxt:  { fontSize: 24, lineHeight: 26, color: '#4A90D9' },
+  weekLabel: { flex: 1, fontSize: 14, fontWeight: '700', textAlign: 'center' },
   dayHeaderRow: {
     flexDirection: 'row',
     paddingVertical: 8,

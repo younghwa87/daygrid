@@ -186,12 +186,29 @@ export default function TimeGridScreen() {
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       {/* 헤더 */}
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <Text style={[styles.dateMain, { color: colors.text }]}>
-          {dateLabel}
-          {isToday && (
-            <Text style={[styles.dateSub, { color: colors.textSecondary }]}>{'  '}Today</Text>
-          )}
-        </Text>
+        <TouchableOpacity
+          onPress={() => setSelectedDate(dayjs(selectedDate).subtract(1, 'day').format('YYYY-MM-DD'))}
+          style={styles.navBtn}
+        >
+          <Text style={[styles.navArrow, { color: colors.text }]}>‹</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => setSelectedDate(dayjs().format('YYYY-MM-DD'))}
+          style={styles.dateLabelBtn}
+        >
+          <Text style={[styles.dateMain, { color: colors.text }]}>
+            {dateLabel}
+            {isToday && (
+              <Text style={[styles.dateSub, { color: colors.textSecondary }]}>{'  '}Today</Text>
+            )}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => setSelectedDate(dayjs(selectedDate).add(1, 'day').format('YYYY-MM-DD'))}
+          style={styles.navBtn}
+        >
+          <Text style={[styles.navArrow, { color: colors.text }]}>›</Text>
+        </TouchableOpacity>
         <TouchableOpacity onPress={() => setSettingsVisible(true)} style={styles.menuButton}>
           <Text style={[styles.menuDots, { color: colors.textSecondary }]}>•••</Text>
         </TouchableOpacity>
@@ -284,6 +301,9 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
+  navBtn: { paddingHorizontal: 8, paddingVertical: 8 },
+  navArrow: { fontSize: 24, lineHeight: 26 },
+  dateLabelBtn: { flex: 1, alignItems: 'center' },
   dateMain: { fontSize: 17, fontWeight: '700', letterSpacing: 0.3 },
   dateSub: { fontSize: 14, fontWeight: '400' },
   menuButton: { padding: 8 },

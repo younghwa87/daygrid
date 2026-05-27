@@ -10,14 +10,11 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
-  Dimensions,
 } from 'react-native';
 import { Schedule, ColorCategory, RepeatType } from '../types';
 import { useAppColors } from '../hooks/useAppColors';
 import { minutesToTimeString } from '../utils/timeUtils';
 import AlarmPicker from './AlarmPicker';
-
-const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 type Props = {
   visible: boolean;
@@ -135,9 +132,11 @@ export default function ScheduleFormModal({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onCancel}>
-      <View style={styles.overlay}>
+      <KeyboardAvoidingView
+        style={styles.overlay}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
         <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={onCancel} />
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <View style={[styles.sheet, { backgroundColor: colors.surface }]}>
             {/* 헤더 */}
             <View style={styles.header}>
@@ -295,8 +294,7 @@ export default function ScheduleFormModal({
               </TouchableOpacity>
             </View>
           </View>
-        </KeyboardAvoidingView>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -345,7 +343,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 16, fontWeight: '700' },
   deleteText: { fontSize: 14, color: '#E05555', fontWeight: '500' },
-  scrollArea: { maxHeight: SCREEN_HEIGHT * 0.5 - 140 },
+  scrollArea: { flexShrink: 1 },
   scrollContent: { gap: 14, paddingBottom: 14 },
   input: {
     borderWidth: 1,
