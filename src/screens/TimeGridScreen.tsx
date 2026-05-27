@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -9,11 +9,13 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ko';
+import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { useScheduleStore } from '../store/scheduleStore';
 import TimeGrid from '../components/TimeGrid';
 import ScheduleFormModal from '../components/ScheduleFormModal';
 import StyleSettingsScreen from './StyleSettingsScreen';
 import WeeklyHeatmapScreen from './WeeklyHeatmapScreen';
+import MonthCalendarModal from '../components/MonthCalendarModal';
 import { notificationService } from '../services/NotificationService';
 import { useNotificationHandler } from '../hooks/useNotificationHandler';
 import { useAppColors } from '../hooks/useAppColors';
@@ -50,6 +52,7 @@ export default function TimeGridScreen() {
   const [modalState, setModalState] = useState<ModalState>(null);
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [heatmapVisible, setHeatmapVisible] = useState(false);
+  const [calendarVisible, setCalendarVisible] = useState(false);
 
   useNotificationHandler();
   const [nowStr, setNowStr] = useState(dayjs().format('HH:mm:ss'));
@@ -161,6 +164,21 @@ export default function TimeGridScreen() {
     }
   }, [modalState, selectedDate, removeSchedule, addScheduleException]);
 
+  const selectedDateRef = useRef(selectedDate);
+  useEffect(() => { selectedDateRef.current = selectedDate; }, [selectedDate]);
+
+  const swipeGesture = Gesture.Pan()
+    .runOnJS(true)
+    .activeOffsetX([-40, 40])
+    .failOffsetY([-20, 20])
+    .onEnd((e) => {
+      if (e.translationX < -60) {
+        setSelectedDate(dayjs(selectedDateRef.current).add(1, 'day').format('YYYY-MM-DD'));
+      } else if (e.translationX > 60) {
+        setSelectedDate(dayjs(selectedDateRef.current).subtract(1, 'day').format('YYYY-MM-DD'));
+      }
+    });
+
   const freeBlocks = calculateFreeBlocks(schedules, gridStartHour, gridEndHour);
   const freeSummary = getDayFreeSummary(freeBlocks, gridStartHour, gridEndHour);
 
@@ -193,7 +211,7 @@ export default function TimeGridScreen() {
           <Text style={[styles.navArrow, { color: colors.text }]}>‹</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={() => setSelectedDate(dayjs().format('YYYY-MM-DD'))}
+          onPress={() => setCalendarVisible(true)}
           style={styles.dateLabelBtn}
         >
           <Text style={[styles.dateMain, { color: colors.text }]}>
@@ -209,18 +227,30 @@ export default function TimeGridScreen() {
         >
           <Text style={[styles.navArrow, { color: colors.text }]}>›</Text>
         </TouchableOpacity>
+        {!isToday && (
+          <TouchableOpacity
+            onPress={() => setSelectedDate(dayjs().format('YYYY-MM-DD'))}
+            style={styles.todayBtn}
+          >
+            <Text style={styles.todayBtnText}>오늘</Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity onPress={() => setSettingsVisible(true)} style={styles.menuButton}>
           <Text style={[styles.menuDots, { color: colors.textSecondary }]}>•••</Text>
         </TouchableOpacity>
       </View>
 
       {/* 타임 그리드 */}
-      <TimeGrid
-        schedules={schedules}
-        selectedDate={selectedDate}
-        onStartCreating={handleStartCreating}
-        onEditSchedule={handleEditSchedule}
-      />
+      <GestureDetector gesture={swipeGesture}>
+        <View style={styles.gridWrapper}>
+          <TimeGrid
+            schedules={schedules}
+            selectedDate={selectedDate}
+            onStartCreating={handleStartCreating}
+            onEditSchedule={handleEditSchedule}
+          />
+        </View>
+      </GestureDetector>
 
       {/* 여백 요약 바 */}
       <View style={[styles.summaryBar, { borderTopColor: colors.border, backgroundColor: colors.background }]}>
@@ -258,6 +288,14 @@ export default function TimeGridScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* 월간 캘린더 */}
+      <MonthCalendarModal
+        visible={calendarVisible}
+        selectedDate={selectedDate}
+        onSelectDate={(date) => { setSelectedDate(date); setCalendarVisible(false); }}
+        onClose={() => setCalendarVisible(false)}
+      />
+
       {/* 스타일 설정 화면 */}
       <StyleSettingsScreen visible={settingsVisible} onClose={() => setSettingsVisible(false)} />
 
@@ -293,6 +331,7 @@ export default function TimeGridScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  gridWrapper: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -306,6 +345,8 @@ const styles = StyleSheet.create({
   dateLabelBtn: { flex: 1, alignItems: 'center' },
   dateMain: { fontSize: 17, fontWeight: '700', letterSpacing: 0.3 },
   dateSub: { fontSize: 14, fontWeight: '400' },
+  todayBtn: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, backgroundColor: '#4A90D922', marginRight: 2 },
+  todayBtnText: { fontSize: 12, color: '#4A90D9', fontWeight: '600' },
   menuButton: { padding: 8 },
   menuDots: { fontSize: 13, letterSpacing: 1, fontWeight: '700' },
   summaryBar: {

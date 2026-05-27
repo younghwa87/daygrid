@@ -11,6 +11,7 @@ import {
   Platform,
   Alert,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Schedule, ColorCategory, RepeatType } from '../types';
 import { useAppColors } from '../hooks/useAppColors';
 import { minutesToTimeString } from '../utils/timeUtils';
@@ -83,6 +84,7 @@ export default function ScheduleFormModal({
   onCancel,
 }: Props) {
   const { colors } = useAppColors();
+  const insets = useSafeAreaInsets();
   const isEditing = !!editingSchedule;
 
   const [title, setTitle] = useState('');
@@ -278,7 +280,7 @@ export default function ScheduleFormModal({
             </ScrollView>
 
             {/* 버튼 */}
-            <View style={styles.buttons}>
+            <View style={[styles.buttons, { paddingBottom: Math.max(insets.bottom, 20) }]}>
               <TouchableOpacity
                 style={[styles.button, { borderColor: colors.border }]}
                 onPress={onCancel}
@@ -381,7 +383,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
     paddingTop: 14,
-    paddingBottom: 36,
   },
   button: {
     flex: 1,
