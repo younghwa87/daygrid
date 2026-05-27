@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   Modal,
-  SafeAreaView,
   TouchableOpacity,
   ScrollView,
   TextInput,
@@ -13,6 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   useSettingsStore,
   BlockSize,
@@ -182,6 +182,7 @@ const prev = StyleSheet.create({
 // ──────────── 메인 화면 ────────────
 export default function StyleSettingsScreen({ visible, onClose }: Props) {
   const { colors, isDark } = useAppColors();
+  const insets = useSafeAreaInsets();
   const {
     blockSize, timeFormat, textSize, textPosition,
     darkMode, setDarkMode,
@@ -212,8 +213,8 @@ export default function StyleSettingsScreen({ visible, onClose }: Props) {
   };
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+      <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top, paddingBottom: insets.bottom }]}>
         <View style={[styles.header, { borderBottomColor: colors.border }]}>
           <TouchableOpacity onPress={onClose} style={styles.backBtn}>
             <Text style={[styles.backText, { color: '#4A90D9' }]}>‹</Text>
@@ -276,7 +277,7 @@ export default function StyleSettingsScreen({ visible, onClose }: Props) {
             ))}
           </View>
         </ScrollView>
-      </SafeAreaView>
+      </View>
 
       <CategoryEditModal
         key={editingCat?.id ?? 'none'}

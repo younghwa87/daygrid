@@ -7,7 +7,7 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import dayjs from 'dayjs';
 import Holidays from 'date-holidays';
 import { useScheduleStore } from '../store/scheduleStore';
@@ -92,6 +92,7 @@ const si = StyleSheet.create({
 
 export default function WeeklyHeatmapScreen({ visible, onClose, onDayPress }: Props) {
   const { colors, isDark } = useAppColors();
+  const insets = useSafeAreaInsets();
   const { getSchedulesByDate, schedules } = useScheduleStore();
 
   const [weekStart, setWeekStart] = useState(() => toMonday(dayjs()));
@@ -136,8 +137,8 @@ export default function WeeklyHeatmapScreen({ visible, onClose, onDayPress }: Pr
   const weekLabel = `${weekStart.format('YYYY.MM.DD')} ~ ${weekStart.add(6, 'day').format('MM.DD')}`;
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+      <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top, paddingBottom: insets.bottom }]}>
 
         {/* 헤더 */}
         <View style={[styles.header, { borderBottomColor: colors.border }]}>
@@ -256,7 +257,7 @@ export default function WeeklyHeatmapScreen({ visible, onClose, onDayPress }: Pr
           </View>
 
         </ScrollView>
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 }

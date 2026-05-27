@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ko';
 import { useScheduleStore } from '../store/scheduleStore';
@@ -31,6 +31,7 @@ type ModalState =
 
 export default function TimeGridScreen() {
   const { colors } = useAppColors();
+  const insets = useSafeAreaInsets();
 
   const {
     selectedDate,
@@ -182,7 +183,7 @@ export default function TimeGridScreen() {
   const dateLabel = dayjs(selectedDate).format('MM.DD ddd').toUpperCase();
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       {/* 헤더 */}
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <Text style={[styles.dateMain, { color: colors.text }]}>
@@ -269,7 +270,7 @@ export default function TimeGridScreen() {
           onCancel={() => setModalState(null)}
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
