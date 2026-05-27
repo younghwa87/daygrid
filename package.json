@@ -12,6 +12,8 @@
     "babel-preset-expo": "^55.0.22",
     "dayjs": "^1.11.20",
     "expo": "~54.0.33",
+    "expo-build-properties": "^56.0.15",
+    "expo-dev-client": "~6.0.21",
     "expo-device": "~8.0.10",
     "expo-linear-gradient": "~15.0.8",
     "expo-notifications": "^0.32.17",
