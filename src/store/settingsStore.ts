@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { createMMKV } from 'react-native-mmkv';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type BlockSize = "small" | "medium" | "large";
 export type TimeFormat = "12h" | "24h";
@@ -17,13 +17,6 @@ export const TEXT_SIZES: Record<TextSize, number> = {
   small: 12,
   medium: 15,
   large: 19,
-};
-
-const mmkv = createMMKV({ id: 'settings-store' });
-const mmkvStorage = {
-  getItem: (key: string): string | null => mmkv.getString(key) ?? null,
-  setItem: (key: string, value: string): void => mmkv.set(key, value),
-  removeItem: (key: string): void => { mmkv.remove(key); },
 };
 
 type SettingsStore = {
@@ -66,7 +59,7 @@ export const useSettingsStore = create<SettingsStore>()(
     }),
     {
       name: 'settings',
-      storage: createJSONStorage(() => mmkvStorage),
+      storage: createJSONStorage(() => AsyncStorage),
     }
   )
 );

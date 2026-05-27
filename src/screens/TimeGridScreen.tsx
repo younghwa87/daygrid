@@ -3,10 +3,10 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ko';
 import { useScheduleStore } from '../store/scheduleStore';
@@ -75,7 +75,7 @@ export default function TimeGridScreen() {
   }, []);
 
   const handleConfirm = useCallback(
-    (data: { title: string; colorCategory: ColorCategory; startTime: number; endTime: number; repeat: RepeatType; reminderOffsets: number[] }) => {
+    (data: { title: string; colorCategory: ColorCategory; startTime: number; endTime: number; repeat: RepeatType; repeatDays: number[]; reminderOffsets: number[] }) => {
       if (!modalState) return;
 
       const excludeId = modalState.mode === 'edit' ? modalState.schedule.id : undefined;
@@ -96,6 +96,7 @@ export default function TimeGridScreen() {
           date: selectedDate,
           hasNotification: data.reminderOffsets.length > 0,
           repeat: data.repeat,
+          repeatDays: data.repeatDays,
           reminderOffsets: data.reminderOffsets,
         };
         addSchedule(newSchedule);
@@ -112,6 +113,7 @@ export default function TimeGridScreen() {
           date: selectedDate,
           hasNotification: data.reminderOffsets.length > 0,
           repeat: 'none' as RepeatType,
+          repeatDays: [],
           reminderOffsets: data.reminderOffsets,
         };
         addSchedule(newSchedule);
@@ -123,6 +125,7 @@ export default function TimeGridScreen() {
           endTime: data.endTime,
           colorCategory: data.colorCategory,
           repeat: data.repeat,
+          repeatDays: data.repeatDays,
           reminderOffsets: data.reminderOffsets,
           hasNotification: data.reminderOffsets.length > 0,
         };

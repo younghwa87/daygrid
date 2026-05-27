@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { createMMKV } from 'react-native-mmkv';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import dayjs from 'dayjs';
 import { Schedule, ColorCategory } from '../types';
 import { DEFAULT_COLOR_CATEGORIES } from '../constants';
@@ -15,7 +15,7 @@ function matchesRepeat(s: Schedule, date: string): boolean {
     case 'daily': return true;
     case 'weekly': return base.day() === target.day();
     case 'monthly': return base.date() === target.date();
-    case 'yearly': return base.month() === target.month() && base.date() === target.date();
+    case 'custom': return (s.repeatDays ?? []).includes(target.day());
   }
 }
 
@@ -33,13 +33,6 @@ type ScheduleStore = {
   addColorCategory: (category: ColorCategory) => void;
   updateColorCategory: (id: string, updates: Partial<ColorCategory>) => void;
   removeColorCategory: (id: string) => void;
-};
-
-const mmkv = createMMKV({ id: 'schedule-store' });
-const mmkvStorage = {
-  getItem: (key: string): string | null => mmkv.getString(key) ?? null,
-  setItem: (key: string, value: string): void => mmkv.set(key, value),
-  removeItem: (key: string): void => { mmkv.remove(key); },
 };
 
 export const useScheduleStore = create<ScheduleStore>()(
@@ -111,7 +104,7 @@ export const useScheduleStore = create<ScheduleStore>()(
     }),
     {
       name: 'schedules',
-      storage: createJSONStorage(() => mmkvStorage),
+      storage: createJSONStorage(() => AsyncStorage),
       // selectedDate는 앱 시작 시 항상 오늘 날짜로 초기화되어야 하므로 제외
       partialize: (state) => ({
         schedules: state.schedules,

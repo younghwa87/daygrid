@@ -31,6 +31,7 @@ type Props = {
     startTime: number;
     endTime: number;
     repeat: RepeatType;
+    repeatDays: number[];
     reminderOffsets: number[];
   }) => void;
   onDelete?: () => void;
@@ -92,6 +93,7 @@ export default function ScheduleFormModal({
   const [startMins, setStartMins] = useState(startMinutes);
   const [endMins, setEndMins] = useState(endMinutes);
   const [repeat, setRepeat] = useState<RepeatType>('none');
+  const [repeatDays, setRepeatDays] = useState<number[]>([]);
   const [reminderOffsets, setReminderOffsets] = useState<number[]>([]);
 
   useEffect(() => {
@@ -102,6 +104,7 @@ export default function ScheduleFormModal({
       setStartMins(editingSchedule.startTime);
       setEndMins(editingSchedule.endTime);
       setRepeat(editingSchedule.repeat ?? 'none');
+      setRepeatDays(editingSchedule.repeatDays ?? []);
       setReminderOffsets(editingSchedule.reminderOffsets ?? []);
     } else {
       setTitle('');
@@ -109,6 +112,7 @@ export default function ScheduleFormModal({
       setStartMins(startMinutes);
       setEndMins(endMinutes);
       setRepeat('none');
+      setRepeatDays([]);
       setReminderOffsets([]);
     }
   }, [visible]);
@@ -120,9 +124,13 @@ export default function ScheduleFormModal({
       Alert.alert('시간 오류', '종료 시간은 시작 시간보다 늦어야 합니다.');
       return;
     }
+    if (repeat === 'custom' && repeatDays.length === 0) {
+      Alert.alert('요일 선택', '반복할 요일을 하나 이상 선택해주세요.');
+      return;
+    }
     const category =
       colorCategories.find((c) => c.id === selectedCategoryId) ?? colorCategories[0];
-    onConfirm({ title: trimmed, colorCategory: category, startTime: startMins, endTime: endMins, repeat, reminderOffsets });
+    onConfirm({ title: trimmed, colorCategory: category, startTime: startMins, endTime: endMins, repeat, repeatDays, reminderOffsets });
   };
 
   return (
@@ -183,7 +191,7 @@ export default function ScheduleFormModal({
                   { value: 'daily', label: '매일' },
                   { value: 'weekly', label: '매주' },
                   { value: 'monthly', label: '매월' },
-                  { value: 'yearly', label: '매년' },
+                  { value: 'custom', label: '요일' },
                 ] as { value: RepeatType; label: string }[]).map((opt) => {
                   const active = repeat === opt.value;
                   return (
@@ -202,6 +210,40 @@ export default function ScheduleFormModal({
                     </TouchableOpacity>
                   );
                 })}
+                {repeat === 'custom' && (
+                  <View style={styles.dayPickerRow}>
+                    {([
+                      { day: 1, label: '월' },
+                      { day: 2, label: '화' },
+                      { day: 3, label: '수' },
+                      { day: 4, label: '목' },
+                      { day: 5, label: '금' },
+                      { day: 6, label: '토' },
+                      { day: 0, label: '일' },
+                    ]).map(({ day, label }) => {
+                      const selected = repeatDays.includes(day);
+                      return (
+                        <TouchableOpacity
+                          key={day}
+                          onPress={() =>
+                            setRepeatDays((prev) =>
+                              prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
+                            )
+                          }
+                          style={[
+                            styles.dayChip,
+                            { borderColor: selected ? '#4A90D9' : colors.border },
+                            selected && styles.dayChipActive,
+                          ]}
+                        >
+                          <Text style={[styles.dayChipText, { color: selected ? '#fff' : colors.textSecondary }]}>
+                            {label}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                )}
               </View>
 
               {/* 알림 설정 */}
@@ -322,6 +364,10 @@ const styles = StyleSheet.create({
   repeatChip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 16, borderWidth: 1 },
   repeatChipActive: { backgroundColor: '#4A90D9' },
   repeatChipText: { fontSize: 13, fontWeight: '500' },
+  dayPickerRow: { flexDirection: 'row', gap: 6, width: '100%', marginTop: 4 },
+  dayChip: { flex: 1, paddingVertical: 7, borderRadius: 16, borderWidth: 1, alignItems: 'center' },
+  dayChipActive: { backgroundColor: '#4A90D9' },
+  dayChipText: { fontSize: 13, fontWeight: '600' },
   categoryScroll: { flexGrow: 0 },
   categoryList: { gap: 8, paddingVertical: 2 },
   chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20 },

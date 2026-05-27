@@ -74,8 +74,8 @@ export function getNextOccurrences(schedule: Schedule, days = 28): string[] {
       case 'monthly':
         matches = base.date() === target.date();
         break;
-      case 'yearly':
-        matches = base.month() === target.month() && base.date() === target.date();
+      case 'custom':
+        matches = (schedule.repeatDays ?? []).includes(target.day());
         break;
     }
     if (matches) results.push(dateStr);

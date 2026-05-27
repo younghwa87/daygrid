@@ -4,14 +4,24 @@ import {
   Text,
   StyleSheet,
   Modal,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import dayjs from 'dayjs';
+import Holidays from 'date-holidays';
 import { useScheduleStore } from '../store/scheduleStore';
 import { useAppColors } from '../hooks/useAppColors';
 import { Schedule } from '../types';
+
+const hd = new Holidays('KR');
+
+function getHolidayName(dateStr: string): string | null {
+  const result = hd.isHoliday(new Date(dateStr));
+  if (!result) return null;
+  const pub = (result as any[]).find((h: any) => h.type === 'public');
+  return pub ? pub.name : null;
+}
 
 type Props = {
   visible: boolean;
@@ -154,7 +164,9 @@ export default function WeeklyHeatmapScreen({ visible, onClose, onDayPress }: Pr
             {weekDays.map((d, i) => {
               const dateStr = d.format('YYYY-MM-DD');
               const isToday = dateStr === today;
-              const color = i === 6 ? '#E05555' : i === 5 ? '#4A90D9' : colors.textSecondary;
+              const holidayName = getHolidayName(dateStr);
+              const isHoliday = !!holidayName;
+              const color = (i === 6 || isHoliday) ? '#E05555' : i === 5 ? '#4A90D9' : colors.textSecondary;
               return (
                 <TouchableOpacity
                   key={i}
@@ -163,10 +175,13 @@ export default function WeeklyHeatmapScreen({ visible, onClose, onDayPress }: Pr
                 >
                   <Text style={[styles.dayName, { color }]}>{DAY_LABELS[i]}</Text>
                   <View style={[styles.dayCircle, isToday && styles.todayCircle]}>
-                    <Text style={[styles.dayDate, { color: isToday ? '#fff' : colors.text }]}>
+                    <Text style={[styles.dayDate, { color: isToday ? '#fff' : (i === 6 || isHoliday) ? '#E05555' : colors.text }]}>
                       {d.date()}
                     </Text>
                   </View>
+                  {holidayName && (
+                    <Text style={styles.holidayName} numberOfLines={1}>{holidayName}</Text>
+                  )}
                 </TouchableOpacity>
               );
             })}
@@ -266,7 +281,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  dayHeaderCell: { flex: 1, alignItems: 'center', gap: 4 },
+  dayHeaderCell: { flex: 1, alignItems: 'center', gap: 4, paddingBottom: 4 },
+  holidayName: { fontSize: 8, color: '#E05555', fontWeight: '600', textAlign: 'center' },
   dayName:       { fontSize: 11, fontWeight: '600' },
   dayCircle:     { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
   todayCircle:   { backgroundColor: '#4A90D9' },
