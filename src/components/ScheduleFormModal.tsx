@@ -12,7 +12,7 @@ import {
   Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Schedule, ColorCategory, RepeatType } from '../types';
+import { Schedule, ColorCategory, RepeatType, ScheduleType } from '../types';
 import { useAppColors } from '../hooks/useAppColors';
 import { minutesToTimeString } from '../utils/timeUtils';
 import AlarmPicker from './AlarmPicker';
@@ -31,6 +31,7 @@ type Props = {
     repeat: RepeatType;
     repeatDays: number[];
     reminderOffsets: number[];
+    scheduleType: ScheduleType;
   }) => void;
   onDelete?: () => void;
   onCancel: () => void;
@@ -94,6 +95,7 @@ export default function ScheduleFormModal({
   const [repeat, setRepeat] = useState<RepeatType>('none');
   const [repeatDays, setRepeatDays] = useState<number[]>([]);
   const [reminderOffsets, setReminderOffsets] = useState<number[]>([]);
+  const [scheduleType, setScheduleType] = useState<ScheduleType>('normal');
 
   useEffect(() => {
     if (!visible) return;
@@ -105,6 +107,7 @@ export default function ScheduleFormModal({
       setRepeat(editingSchedule.repeat ?? 'none');
       setRepeatDays(editingSchedule.repeatDays ?? []);
       setReminderOffsets(editingSchedule.reminderOffsets ?? []);
+      setScheduleType(editingSchedule.scheduleType ?? 'normal');
     } else {
       setTitle('');
       setSelectedCategoryId(colorCategories[0]?.id ?? '');
@@ -113,6 +116,7 @@ export default function ScheduleFormModal({
       setRepeat('none');
       setRepeatDays([]);
       setReminderOffsets([]);
+      setScheduleType('normal');
     }
   }, [visible]);
 
@@ -129,7 +133,7 @@ export default function ScheduleFormModal({
     }
     const category =
       colorCategories.find((c) => c.id === selectedCategoryId) ?? colorCategories[0];
-    onConfirm({ title: trimmed, colorCategory: category, startTime: startMins, endTime: endMins, repeat, repeatDays, reminderOffsets });
+    onConfirm({ title: trimmed, colorCategory: category, startTime: startMins, endTime: endMins, repeat, repeatDays, reminderOffsets, scheduleType });
   };
 
   return (
@@ -145,11 +149,22 @@ export default function ScheduleFormModal({
               <Text style={[styles.headerTitle, { color: colors.text }]}>
                 {isEditing ? '일정 수정' : '새 일정'}
               </Text>
-              {isEditing && (
-                <TouchableOpacity onPress={onDelete}>
-                  <Text style={styles.deleteText}>삭제</Text>
+              <View style={styles.headerRight}>
+                {/* 수면 토글 */}
+                <TouchableOpacity
+                  onPress={() => setScheduleType(t => t === 'sleep' ? 'normal' : 'sleep')}
+                  style={[styles.sleepChip, scheduleType === 'sleep' && styles.sleepChipActive]}
+                >
+                  <Text style={[styles.sleepChipText, scheduleType === 'sleep' && styles.sleepChipTextActive]}>
+                    🌙 수면
+                  </Text>
                 </TouchableOpacity>
-              )}
+                {isEditing && (
+                  <TouchableOpacity onPress={onDelete}>
+                    <Text style={styles.deleteText}>삭제</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
             </View>
 
             <ScrollView
@@ -344,6 +359,11 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   headerTitle: { fontSize: 16, fontWeight: '700' },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  sleepChip: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, backgroundColor: '#6366F122', borderWidth: 1, borderColor: '#6366F144' },
+  sleepChipActive: { backgroundColor: '#6366F1', borderColor: '#6366F1' },
+  sleepChipText: { fontSize: 12, fontWeight: '600', color: '#6366F1' },
+  sleepChipTextActive: { color: '#fff' },
   deleteText: { fontSize: 14, color: '#E05555', fontWeight: '500' },
   scrollArea: { flexShrink: 1 },
   scrollContent: { gap: 14, paddingBottom: 14 },

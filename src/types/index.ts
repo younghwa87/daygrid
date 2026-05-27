@@ -16,6 +16,8 @@ export type ColorCategory = {
 
 export type RepeatType = 'none' | 'daily' | 'weekly' | 'monthly' | 'custom';
 
+export type ScheduleType = 'normal' | 'sleep';
+
 export type Schedule = {
   id: string;
   title: string;
@@ -29,4 +31,5 @@ export type Schedule = {
   reminderOffsets: number[]; // 알림 시각 배열 (분 단위, 음수=이전, 예: [-5, -30])
   exceptions?: string[]; // 반복에서 제외할 날짜 목록 ('YYYY-MM-DD')
   isOverflow?: boolean; // 전날 자정 넘는 일정이 다음날 그리드에 표시될 때
+  scheduleType?: ScheduleType; // 'normal'(기본) | 'sleep'(수면)
 };

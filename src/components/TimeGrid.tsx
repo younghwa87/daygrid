@@ -269,12 +269,13 @@ export default function TimeGrid({ schedules, selectedDate, onStartCreating, onE
             })()}
 
             {/* 일정 블록 */}
-            {schedules.map((s) => renderSegments(
-              s.startTime, s.endTime,
-              s.colorCategory.color,
-              s.title, s.id,
-              s.isOverflow ? '77' : 'CC'
-            ))}
+            {schedules.map((s) => {
+              const isSleep = s.scheduleType === 'sleep';
+              const color = isSleep ? '#6366F1' : s.colorCategory.color;
+              const alpha = isSleep ? '55' : s.isOverflow ? '77' : 'CC';
+              const title = isSleep ? `🌙 ${s.title}` : s.title;
+              return renderSegments(s.startTime, s.endTime, color, title, s.id, alpha);
+            })}
 
             {/* 생성 중 고스트 */}
             {ghost && renderSegments(ghost.startMins, ghost.endMins, '#4A90D9', '', 'ghost')}

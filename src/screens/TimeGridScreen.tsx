@@ -19,7 +19,7 @@ import MonthCalendarModal from '../components/MonthCalendarModal';
 import { notificationService } from '../services/NotificationService';
 import { useNotificationHandler } from '../hooks/useNotificationHandler';
 import { useAppColors } from '../hooks/useAppColors';
-import { Schedule, ColorCategory, RepeatType } from '../types';
+import { Schedule, ColorCategory, RepeatType, ScheduleType } from '../types';
 import uuid from '../utils/uuid';
 import { calculateFreeBlocks, getDayFreeSummary } from '../utils/freeBlockCalculator';
 import { useSettingsStore } from '../store/settingsStore';
@@ -79,7 +79,7 @@ export default function TimeGridScreen() {
   }, []);
 
   const handleConfirm = useCallback(
-    (data: { title: string; colorCategory: ColorCategory; startTime: number; endTime: number; repeat: RepeatType; repeatDays: number[]; reminderOffsets: number[] }) => {
+    (data: { title: string; colorCategory: ColorCategory; startTime: number; endTime: number; repeat: RepeatType; repeatDays: number[]; reminderOffsets: number[]; scheduleType: ScheduleType }) => {
       if (!modalState) return;
 
       const excludeId = modalState.mode === 'edit' ? modalState.schedule.id : undefined;
@@ -102,6 +102,7 @@ export default function TimeGridScreen() {
           repeat: data.repeat,
           repeatDays: data.repeatDays,
           reminderOffsets: data.reminderOffsets,
+          scheduleType: data.scheduleType,
         };
         addSchedule(newSchedule);
         notificationService.scheduleAlarmsForSchedule(newSchedule);
@@ -119,6 +120,7 @@ export default function TimeGridScreen() {
           repeat: 'none' as RepeatType,
           repeatDays: [],
           reminderOffsets: data.reminderOffsets,
+          scheduleType: data.scheduleType,
         };
         addSchedule(newSchedule);
         notificationService.scheduleAlarmsForSchedule(newSchedule);
@@ -132,6 +134,7 @@ export default function TimeGridScreen() {
           repeatDays: data.repeatDays,
           reminderOffsets: data.reminderOffsets,
           hasNotification: data.reminderOffsets.length > 0,
+          scheduleType: data.scheduleType,
         };
         updateSchedule(modalState.schedule.id, updates);
         notificationService.cancelAllAlarmsForSchedule(modalState.schedule.id).then(() => {

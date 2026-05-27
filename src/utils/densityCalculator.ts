@@ -124,11 +124,12 @@ function getInsight(level: DensityLevel, b: DensityBreakdown): string {
   return '오늘은 정말 여유로운 하루예요 ✦';
 }
 
-// 메인 함수: 하루 일정 배열 → DensityResult
+// 메인 함수: 하루 일정 배열 → DensityResult (수면 일정 제외)
 export function calculateDayDensity(schedules: Schedule[]): DensityResult {
-  const timeDensityScore = calcTimeDensity(schedules);
-  const switchIndexScore = calcSwitchIndex(schedules);
-  const recoveryScore    = calcRecovery(schedules);
+  const active = schedules.filter(s => s.scheduleType !== 'sleep');
+  const timeDensityScore = calcTimeDensity(active);
+  const switchIndexScore = calcSwitchIndex(active);
+  const recoveryScore    = calcRecovery(active);
 
   const rawScore   = timeDensityScore * WEIGHTS.time
                    + switchIndexScore * WEIGHTS.switch
