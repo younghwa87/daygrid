@@ -36,6 +36,7 @@ export function getTodaySchedules(): WidgetSchedule[] {
       .map((s) => ({
         title: s.title,
         startTime: s.startTime,
+        endTime: s.endTime,
         color: s.colorCategory?.color ?? '#4A90D9',
       }));
   } catch {
@@ -47,7 +48,10 @@ export function updateTodayWidget(): void {
   const schedules = getTodaySchedules();
   const dateLabel = dayjs().format('M/D (ddd)');
   const now = dayjs().hour() * 60 + dayjs().minute();
-  const next = schedules.find((s) => s.startTime >= now) ?? schedules[schedules.length - 1] ?? null;
+  const current =
+    schedules.find((s) => s.startTime <= now && now < s.endTime) ??
+    schedules.find((s) => s.startTime >= now) ??
+    null;
 
   requestWidgetUpdate({
     widgetName: 'Today',
@@ -56,7 +60,7 @@ export function updateTodayWidget(): void {
   });
   requestWidgetUpdate({
     widgetName: 'TodaySmall',
-    renderWidget: () => React.createElement(SmallTodayWidget, { next, dateLabel }),
+    renderWidget: () => React.createElement(SmallTodayWidget, { current }),
     widgetNotFound: () => {},
   });
 }

@@ -50,12 +50,12 @@
             },
             {
               "name": "TodaySmall",
-              "label": "Datile 다음 일정",
+              "label": "Datile 현재 일정",
               "minWidth": "110dp",
-              "minHeight": "110dp",
+              "minHeight": "48dp",
               "targetCellWidth": 2,
-              "targetCellHeight": 2,
-              "description": "다음 일정을 홈 화면에서 빠르게 확인",
+              "targetCellHeight": 1,
+              "description": "현재 진행 중인 일정을 한눈에 확인",
               "updatePeriodMillis": 1800000
             }
           ]

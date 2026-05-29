@@ -4,8 +4,7 @@ import { FlexWidget, TextWidget } from 'react-native-android-widget';
 import { WidgetSchedule } from './TodayWidget';
 
 type Props = {
-  next: WidgetSchedule | null;
-  dateLabel: string;
+  current: WidgetSchedule | null;
 };
 
 function formatTime(minutes: number): string {
@@ -14,49 +13,46 @@ function formatTime(minutes: number): string {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
-export function SmallTodayWidget({ next, dateLabel }: Props) {
+export function SmallTodayWidget({ current }: Props) {
   return (
     <FlexWidget
+      clickAction="OPEN_APP"
       style={{
         height: 'match_parent',
         width: 'match_parent',
-        flexDirection: 'column',
-        justifyContent: 'center',
+        flexDirection: 'row',
+        alignItems: 'center',
         backgroundColor: '#FFFFFF',
-        borderRadius: 16,
-        padding: 14,
+        borderRadius: 12,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
       }}
     >
-      <TextWidget
-        text={dateLabel}
-        style={{ fontSize: 11, color: '#4A90D9', fontWeight: 'bold', marginBottom: 6 }}
-      />
-
-      {next === null && (
+      {current === null && (
         <TextWidget
           text="오늘 일정 없음"
-          style={{ fontSize: 13, color: '#AAAAAA' }}
+          style={{ fontSize: 12, color: '#CCCCCC' }}
         />
       )}
 
-      {next !== null && (
-        <FlexWidget style={{ flexDirection: 'column' }}>
+      {current !== null && (
+        <FlexWidget style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
           <FlexWidget
             style={{
-              width: 24,
-              height: 4,
+              width: 3,
+              height: 20,
               borderRadius: 2,
-              backgroundColor: next.color as `#${string}`,
-              marginBottom: 6,
+              backgroundColor: current.color as `#${string}`,
+              marginRight: 8,
             }}
           />
           <TextWidget
-            text={formatTime(next.startTime)}
-            style={{ fontSize: 20, color: '#333333', fontWeight: 'bold' }}
+            text={current.title}
+            style={{ fontSize: 12, color: '#333333' }}
           />
           <TextWidget
-            text={next.title}
-            style={{ fontSize: 13, color: '#555555', marginTop: 2 }}
+            text={formatTime(current.startTime)}
+            style={{ fontSize: 11, color: '#AAAAAA', marginLeft: 6 }}
           />
         </FlexWidget>
       )}
