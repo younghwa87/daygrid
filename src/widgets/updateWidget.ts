@@ -3,6 +3,7 @@ import { MMKV } from 'react-native-mmkv';
 import { requestWidgetUpdate } from 'react-native-android-widget';
 import dayjs from 'dayjs';
 import { TodayWidget, WidgetSchedule } from './TodayWidget';
+import { SmallTodayWidget } from './SmallTodayWidget';
 import { Schedule } from '../types';
 
 const widgetMMKV = new MMKV();
@@ -45,9 +46,17 @@ export function getTodaySchedules(): WidgetSchedule[] {
 export function updateTodayWidget(): void {
   const schedules = getTodaySchedules();
   const dateLabel = dayjs().format('M/D (ddd)');
+  const now = dayjs().hour() * 60 + dayjs().minute();
+  const next = schedules.find((s) => s.startTime >= now) ?? schedules[schedules.length - 1] ?? null;
+
   requestWidgetUpdate({
     widgetName: 'Today',
     renderWidget: () => React.createElement(TodayWidget, { schedules, dateLabel }),
+    widgetNotFound: () => {},
+  });
+  requestWidgetUpdate({
+    widgetName: 'TodaySmall',
+    renderWidget: () => React.createElement(SmallTodayWidget, { next, dateLabel }),
     widgetNotFound: () => {},
   });
 }
