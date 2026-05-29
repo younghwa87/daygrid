@@ -1,19 +1,17 @@
-import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { initializeApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyB_nOzWY8sKzFx0Irhq8ttrN1APTq1ORBQ",
-  authDomain: "datile-27170.firebaseapp.com",
-  projectId: "datile-27170",
-  storageBucket: "datile-27170.firebasestorage.app",
-  messagingSenderId: "516657531439",
-  appId: "1:516657531439:web:7a28b7dbcb8f24c303d4da",
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
 };
 
-// TODO: Firebase Console → Authentication → Sign-in method → Google → 웹 클라이언트 ID
-export const GOOGLE_WEB_CLIENT_ID =
-  "516657531439-v0palrm8l5q8ofv9e68s8nejo2caflps.apps.googleusercontent.com";
+export const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? '';
 
 export const firebaseApp = initializeApp(firebaseConfig);
 export const auth = getAuth(firebaseApp);
