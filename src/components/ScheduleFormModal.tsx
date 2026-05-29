@@ -11,6 +11,7 @@ import {
   Platform,
   Alert,
   Keyboard,
+  Dimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Schedule, ColorCategory, RepeatType, ScheduleType } from '../types';
@@ -104,7 +105,7 @@ function TimeAdjuster({
 
   const commitEdit = () => {
     const parsed = parseTimeInput(inputVal);
-    if (parsed !== null) onChange(parsed);
+    if (parsed !== null) onChange(Math.round(parsed / 10) * 10);
     setEditing(false);
   };
 
@@ -173,6 +174,7 @@ export default function ScheduleFormModal({
   const isEditing = !!editingSchedule;
 
   const [title, setTitle] = useState('');
+  const [titleFocused, setTitleFocused] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState(colorCategories[0]?.id ?? '');
   const [startMins, setStartMins] = useState(startMinutes);
   const [endMins, setEndMins] = useState(endMinutes);
@@ -181,13 +183,21 @@ export default function ScheduleFormModal({
   const [reminderOffsets, setReminderOffsets] = useState<number[]>([]);
   const [scheduleType, setScheduleType] = useState<ScheduleType>('normal');
 
+  // 시간 입력 중 저장 버튼을 누를 때 onBlur setState가 배치되기 전에
+  // handleConfirm이 실행되므로, ref로 최신값을 동기적으로 추적
+  const startMinsRef = useRef(startMinutes);
+  const endMinsRef = useRef(endMinutes);
+
+  const setStart = (m: number) => { startMinsRef.current = m; setStartMins(m); };
+  const setEnd = (m: number) => { endMinsRef.current = m; setEndMins(m); };
+
   useEffect(() => {
     if (!visible) return;
     if (editingSchedule) {
       setTitle(editingSchedule.title);
       setSelectedCategoryId(editingSchedule.colorCategory.id);
-      setStartMins(editingSchedule.startTime);
-      setEndMins(editingSchedule.endTime);
+      setStart(editingSchedule.startTime);
+      setEnd(editingSchedule.endTime);
       setRepeat(editingSchedule.repeat ?? 'none');
       setRepeatDays(editingSchedule.repeatDays ?? []);
       setReminderOffsets(editingSchedule.reminderOffsets ?? []);
@@ -195,8 +205,8 @@ export default function ScheduleFormModal({
     } else {
       setTitle('');
       setSelectedCategoryId(colorCategories[0]?.id ?? '');
-      setStartMins(startMinutes);
-      setEndMins(endMinutes);
+      setStart(startMinutes);
+      setEnd(endMinutes);
       setRepeat('none');
       setRepeatDays([]);
       setReminderOffsets([]);
@@ -207,7 +217,9 @@ export default function ScheduleFormModal({
   const handleConfirm = () => {
     const trimmed = title.trim();
     if (!trimmed) return;
-    if (startMins >= endMins) {
+    const s = startMinsRef.current;
+    const e = endMinsRef.current;
+    if (s >= e) {
       Alert.alert('시간 오류', '종료 시간은 시작 시간보다 늦어야 합니다.');
       return;
     }
@@ -217,17 +229,17 @@ export default function ScheduleFormModal({
     }
     const category =
       colorCategories.find((c) => c.id === selectedCategoryId) ?? colorCategories[0];
-    onConfirm({ title: trimmed, colorCategory: category, startTime: startMins, endTime: endMins, repeat, repeatDays, reminderOffsets, scheduleType });
+    onConfirm({ title: trimmed, colorCategory: category, startTime: s, endTime: e, repeat, repeatDays, reminderOffsets, scheduleType });
   };
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onCancel}>
       <KeyboardAvoidingView
         style={styles.overlay}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior="height"
       >
         <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={onCancel} />
-          <View style={[styles.sheet, { backgroundColor: colors.surface }]}>
+          <View style={[styles.sheet, { backgroundColor: colors.surface, maxHeight: Dimensions.get('window').height - insets.top - 10 }]}>
             {/* 헤더 */}
             <View style={styles.header}>
               <Text style={[styles.headerTitle, { color: colors.text }]}>
@@ -263,25 +275,29 @@ export default function ScheduleFormModal({
                 style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}
                 placeholder="일정 제목"
                 placeholderTextColor={colors.textSecondary}
-                onFocus={() => scrollRef.current?.scrollTo({ y: 0, animated: true })}
+                onFocus={() => { setTitleFocused(true); scrollRef.current?.scrollTo({ y: 0, animated: true }); }}
+                onBlur={() => setTitleFocused(false)}
                 value={title}
                 onChangeText={setTitle}
                 returnKeyType="done"
-                onSubmitEditing={handleConfirm}
+                onSubmitEditing={() => Keyboard.dismiss()}
               />
 
+              {/* 제목 입력 중엔 나머지 폼 숨김 */}
+              {!titleFocused && (
+              <>
               {/* 시간 조정 */}
               <View style={[styles.timeBox, { backgroundColor: colors.background, borderColor: colors.border }]}>
                 <TimeAdjuster
                   label="시작"
                   minutes={startMins}
-                  onChange={(m) => setStartMins(Math.max(0, m))}
+                  onChange={(m) => setStart(Math.max(0, m))}
                 />
                 <View style={[styles.timeDivider, { backgroundColor: colors.border }]} />
                 <TimeAdjuster
                   label="종료"
                   minutes={endMins}
-                  onChange={(m) => setEndMins(Math.min(30 * 60, m))}
+                  onChange={(m) => setEnd(Math.min(30 * 60, m))}
                   badge={endMins >= 24 * 60 ? '+1 day' : undefined}
                 />
               </View>
@@ -378,6 +394,8 @@ export default function ScheduleFormModal({
                   );
                 })}
               </ScrollView>
+              </>
+              )}
             </ScrollView>
 
             {/* 버튼 */}
@@ -422,8 +440,8 @@ const adjStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   btnText: { fontSize: 18, lineHeight: 20 },
-  time: { fontSize: 15, fontWeight: '600', width: 60, textAlign: 'center' },
-  timeTouchable: { width: 60, alignItems: 'center' },
+  time: { fontSize: 15, fontWeight: '600', width: 80, textAlign: 'center' },
+  timeTouchable: { width: 80, paddingVertical: 8, alignItems: 'center' },
   timeInput: {
     fontSize: 15,
     fontWeight: '600',

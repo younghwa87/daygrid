@@ -2,6 +2,7 @@
   "expo": {
     "name": "Datile",
     "slug": "datile",
+    "scheme": "datile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -30,7 +31,8 @@
             "minSdkVersion": 24
           }
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "ios": {
       "supportsTablet": true

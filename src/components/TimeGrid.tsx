@@ -21,7 +21,7 @@ type Props = {
 
 type GhostBlock = { startMins: number; endMins: number } | null;
 
-export default function TimeGrid({ schedules, selectedDate, onStartCreating, onEditSchedule }: Props) {
+export default React.memo(function TimeGrid({ schedules, selectedDate, onStartCreating, onEditSchedule }: Props) {
   const { colors, isDark } = useAppColors();
   const { rowHeight, timeFormat, gridStartHour, gridEndHour, fontSize, textPosition } = useSettingsStore();
 
@@ -292,7 +292,7 @@ export default function TimeGrid({ schedules, selectedDate, onStartCreating, onE
       </View>
     </ScrollView>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: { flex: 1 },

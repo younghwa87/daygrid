@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -25,6 +25,16 @@ import { calculateFreeBlocks, getDayFreeSummary } from '../utils/freeBlockCalcul
 import { useSettingsStore } from '../store/settingsStore';
 
 dayjs.locale('ko');
+
+// 시계만 독립 컴포넌트로 분리 → 초마다 TimeGridScreen 전체가 리렌더되는 것을 방지
+const ClockText = React.memo(function ClockText({ style }: { style: object }) {
+  const [now, setNow] = useState(dayjs().format('HH:mm:ss'));
+  useEffect(() => {
+    const t = setInterval(() => setNow(dayjs().format('HH:mm:ss')), 1000);
+    return () => clearInterval(t);
+  }, []);
+  return <Text style={style}>{now}</Text>;
+});
 
 type ModalState =
   | { mode: 'create'; startMinutes: number; endMinutes: number }
@@ -56,12 +66,6 @@ export default function TimeGridScreen() {
   const [calendarVisible, setCalendarVisible] = useState(false);
 
   useNotificationHandler();
-  const [nowStr, setNowStr] = useState(dayjs().format('HH:mm:ss'));
-
-  useEffect(() => {
-    const t = setInterval(() => setNowStr(dayjs().format('HH:mm:ss')), 1000);
-    return () => clearInterval(t);
-  }, []);
 
   const handleStartCreating = useCallback((startMinutes: number, endMinutes: number) => {
     setModalState({ mode: 'create', startMinutes, endMinutes });
@@ -193,8 +197,14 @@ export default function TimeGridScreen() {
       }
     });
 
-  const freeBlocks = calculateFreeBlocks(schedules, gridStartHour, gridEndHour);
-  const freeSummary = getDayFreeSummary(freeBlocks, gridStartHour, gridEndHour);
+  const freeBlocks = useMemo(
+    () => calculateFreeBlocks(schedules, gridStartHour, gridEndHour),
+    [schedules, gridStartHour, gridEndHour]
+  );
+  const freeSummary = useMemo(
+    () => getDayFreeSummary(freeBlocks, gridStartHour, gridEndHour),
+    [freeBlocks, gridStartHour, gridEndHour]
+  );
 
   function summaryBarColor(): string {
     if (freeSummary.freeRatio < 0.3) return '#E05555';
@@ -296,7 +306,7 @@ export default function TimeGridScreen() {
 
       {/* 하단 바 */}
       <View style={[styles.bottomBar, { borderTopColor: colors.border, backgroundColor: colors.background }]}>
-        <Text style={[styles.clockText, { color: colors.textSecondary }]}>{nowStr}</Text>
+        <ClockText style={[styles.clockText, { color: colors.textSecondary }]} />
         <TouchableOpacity style={styles.calButton} onPress={() => setHeatmapVisible(true)}>
           <Text style={{ fontSize: 18 }}>🗓️</Text>
         </TouchableOpacity>

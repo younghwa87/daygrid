@@ -48,14 +48,16 @@ function toMonday(d: dayjs.Dayjs): dayjs.Dayjs {
   return d.add(dow === 0 ? -6 : 1 - dow, 'day').startOf('day');
 }
 
-// 시간당 점유 분 → density 인덱스 0~4
+// 시간당 점유 분 → density 인덱스 0~4 (수면 제외)
 function calcHourDensity(daySchedules: Schedule[], hour: number): number {
   const s0 = hour * 60;
   const s1 = s0 + 60;
-  const occupied = daySchedules.reduce(
-    (sum, s) => sum + Math.max(0, Math.min(s.endTime, s1) - Math.max(s.startTime, s0)),
-    0
-  );
+  const occupied = daySchedules
+    .filter(s => s.scheduleType !== 'sleep')
+    .reduce(
+      (sum, s) => sum + Math.max(0, Math.min(s.endTime, s1) - Math.max(s.startTime, s0)),
+      0
+    );
   if (occupied === 0) return 0;
   if (occupied <= 15) return 1;
   if (occupied <= 30) return 2;
@@ -119,7 +121,8 @@ export default function WeeklyHeatmapScreen({ visible, onClose, onDayPress }: Pr
   // 주간 요약
   const summary = useMemo(() => {
     const dayMins = weekSchedules.map(ds =>
-      ds.reduce((sum, s) => sum + Math.max(0, s.endTime - s.startTime), 0)
+      ds.filter(s => s.scheduleType !== 'sleep')
+        .reduce((sum, s) => sum + Math.max(0, s.endTime - s.startTime), 0)
     );
     const totalMins = dayMins.reduce((a, b) => a + b, 0);
     const freeMins  = 7 * 24 * 60 - totalMins;

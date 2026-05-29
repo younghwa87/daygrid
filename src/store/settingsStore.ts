@@ -19,6 +19,16 @@ export const TEXT_SIZES: Record<TextSize, number> = {
   large: 19,
 };
 
+export type BackupSettingsPayload = {
+  blockSize: BlockSize;
+  timeFormat: TimeFormat;
+  textSize: TextSize;
+  textPosition: TextPosition;
+  gridStartHour: number;
+  gridEndHour: number;
+  darkMode: boolean;
+};
+
 type SettingsStore = {
   blockSize: BlockSize;
   timeFormat: TimeFormat;
@@ -29,12 +39,14 @@ type SettingsStore = {
   rowHeight: number;
   fontSize: number;
   darkMode: boolean;
+  updatedAt: number;
   setBlockSize: (size: BlockSize) => void;
   setTimeFormat: (format: TimeFormat) => void;
   setTextSize: (size: TextSize) => void;
   setTextPosition: (pos: TextPosition) => void;
   setGridRange: (startHour: number, endHour: number) => void;
   setDarkMode: (v: boolean) => void;
+  restoreFromCloud: (s: BackupSettingsPayload) => void;
 };
 
 export const useSettingsStore = create<SettingsStore>()(
@@ -49,13 +61,26 @@ export const useSettingsStore = create<SettingsStore>()(
       rowHeight: ROW_HEIGHTS.medium,
       fontSize: TEXT_SIZES.medium,
       darkMode: false,
+      updatedAt: 0,
 
-      setBlockSize: (size) => set({ blockSize: size, rowHeight: ROW_HEIGHTS[size] }),
-      setTimeFormat: (format) => set({ timeFormat: format }),
-      setTextSize: (size) => set({ textSize: size, fontSize: TEXT_SIZES[size] }),
-      setTextPosition: (pos) => set({ textPosition: pos }),
-      setGridRange: (startHour, endHour) => set({ gridStartHour: startHour, gridEndHour: endHour }),
-      setDarkMode: (v) => set({ darkMode: v }),
+      setBlockSize: (size) => set({ blockSize: size, rowHeight: ROW_HEIGHTS[size], updatedAt: Date.now() }),
+      setTimeFormat: (format) => set({ timeFormat: format, updatedAt: Date.now() }),
+      setTextSize: (size) => set({ textSize: size, fontSize: TEXT_SIZES[size], updatedAt: Date.now() }),
+      setTextPosition: (pos) => set({ textPosition: pos, updatedAt: Date.now() }),
+      setGridRange: (startHour, endHour) => set({ gridStartHour: startHour, gridEndHour: endHour, updatedAt: Date.now() }),
+      setDarkMode: (v) => set({ darkMode: v, updatedAt: Date.now() }),
+
+      restoreFromCloud: (s) => set({
+        blockSize: s.blockSize as BlockSize,
+        timeFormat: s.timeFormat as TimeFormat,
+        textSize: s.textSize as TextSize,
+        textPosition: s.textPosition as TextPosition,
+        gridStartHour: s.gridStartHour,
+        gridEndHour: s.gridEndHour,
+        darkMode: s.darkMode,
+        rowHeight: ROW_HEIGHTS[s.blockSize as BlockSize] ?? ROW_HEIGHTS.medium,
+        fontSize: TEXT_SIZES[s.textSize as TextSize] ?? TEXT_SIZES.medium,
+      }),
     }),
     {
       name: 'settings',

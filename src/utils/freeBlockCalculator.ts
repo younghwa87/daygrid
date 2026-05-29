@@ -46,6 +46,7 @@ export function calculateFreeBlocks(
   const occupied = new Uint8Array(totalMins);
 
   for (const s of schedules) {
+    if (s.scheduleType === 'sleep') continue; // 수면은 여백 계산에서 제외
     const sStart = Math.max(0, s.startTime - startMin);
     const sEnd = Math.min(totalMins, s.endTime - startMin);
     for (let m = sStart; m < sEnd; m++) {

@@ -23,6 +23,7 @@ type ScheduleStore = {
   schedules: Schedule[];
   colorCategories: ColorCategory[];
   selectedDate: string;
+  updatedAt: number;
   setSelectedDate: (date: string) => void;
   addSchedule: (schedule: Schedule) => void;
   updateSchedule: (id: string, updates: Partial<Schedule>) => void;
@@ -33,6 +34,7 @@ type ScheduleStore = {
   addColorCategory: (category: ColorCategory) => void;
   updateColorCategory: (id: string, updates: Partial<ColorCategory>) => void;
   removeColorCategory: (id: string) => void;
+  restoreFromCloud: (schedules: Schedule[], colorCategories: ColorCategory[]) => void;
 };
 
 export const useScheduleStore = create<ScheduleStore>()(
@@ -41,25 +43,28 @@ export const useScheduleStore = create<ScheduleStore>()(
       schedules: [],
       colorCategories: DEFAULT_COLOR_CATEGORIES as typeof DEFAULT_COLOR_CATEGORIES,
       selectedDate: dayjs().format('YYYY-MM-DD'),
+      updatedAt: 0,
 
       setSelectedDate: (date) => set({ selectedDate: date }),
 
       addSchedule: (schedule) =>
-        set((state) => ({ schedules: [...state.schedules, schedule] })),
+        set((state) => ({ schedules: [...state.schedules, schedule], updatedAt: Date.now() })),
 
       updateSchedule: (id, updates) =>
         set((state) => ({
           schedules: state.schedules.map((s) => (s.id === id ? { ...s, ...updates } : s)),
+          updatedAt: Date.now(),
         })),
 
       removeSchedule: (id) =>
-        set((state) => ({ schedules: state.schedules.filter((s) => s.id !== id) })),
+        set((state) => ({ schedules: state.schedules.filter((s) => s.id !== id), updatedAt: Date.now() })),
 
       addScheduleException: (id, date) =>
         set((state) => ({
           schedules: state.schedules.map((s) =>
             s.id === id ? { ...s, exceptions: [...(s.exceptions ?? []), date] } : s
           ),
+          updatedAt: Date.now(),
         })),
 
       getSchedulesByDate: (date) => {
@@ -88,19 +93,24 @@ export const useScheduleStore = create<ScheduleStore>()(
       },
 
       addColorCategory: (category) =>
-        set((state) => ({ colorCategories: [...state.colorCategories, category] })),
+        set((state) => ({ colorCategories: [...state.colorCategories, category], updatedAt: Date.now() })),
 
       updateColorCategory: (id, updates) =>
         set((state) => ({
           colorCategories: state.colorCategories.map((c) =>
             c.id === id ? { ...c, ...updates } : c
           ),
+          updatedAt: Date.now(),
         })),
 
       removeColorCategory: (id) =>
         set((state) => ({
           colorCategories: state.colorCategories.filter((c) => c.id !== id),
+          updatedAt: Date.now(),
         })),
+
+      restoreFromCloud: (schedules, colorCategories) =>
+        set({ schedules, colorCategories }),
     }),
     {
       name: 'schedules',
@@ -109,6 +119,7 @@ export const useScheduleStore = create<ScheduleStore>()(
       partialize: (state) => ({
         schedules: state.schedules,
         colorCategories: state.colorCategories,
+        updatedAt: state.updatedAt,
       }),
     }
   )

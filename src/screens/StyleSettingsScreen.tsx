@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -10,9 +10,14 @@ import {
   Switch,
   Alert,
   KeyboardAvoidingView,
-  Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Google from 'expo-auth-session/providers/google';
+import { GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
+import { auth, GOOGLE_WEB_CLIENT_ID } from '../services/firebase';
+import { signOutGoogle, pushBackup, pullBackup, BackupSettings } from '../services/SyncService';
+import { useAuthStore } from '../store/authStore';
 import {
   useSettingsStore,
   BlockSize,
@@ -90,11 +95,9 @@ function CategoryEditModal({
   if (!category) return null;
   return (
     <Modal visible transparent animationType="fade" onRequestClose={onClose}>
-      <TouchableOpacity style={catEdit.backdrop} activeOpacity={1} onPress={onClose} />
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={catEdit.keyboardView}
-      >
+      <KeyboardAvoidingView behavior="height" style={{ flex: 1 }}>
+        {/* 반투명 배경: flex:1로 박스 위 공간을 채우며 탭 시 닫힘 */}
+        <TouchableOpacity style={catEdit.backdrop} activeOpacity={1} onPress={onClose} />
         <View style={[catEdit.box, { backgroundColor: colors.surface }]}>
           <Text style={[catEdit.title, { color: colors.text }]}>카테고리 편집</Text>
 
@@ -104,6 +107,7 @@ function CategoryEditModal({
             onChangeText={setLabel}
             placeholder="카테고리 이름"
             placeholderTextColor={colors.textSecondary}
+            returnKeyType="done"
             autoFocus
           />
 
@@ -136,7 +140,6 @@ function CategoryEditModal({
 }
 const catEdit = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: '#00000066' },
-  keyboardView: { flex: 1, justifyContent: 'flex-end' },
   box: { borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, gap: 16, paddingBottom: 36 },
   title: { fontSize: 16, fontWeight: '700', textAlign: 'center' },
   input: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15 },
@@ -187,9 +190,78 @@ export default function StyleSettingsScreen({ visible, onClose }: Props) {
     blockSize, timeFormat, textSize, textPosition,
     darkMode, setDarkMode,
     setBlockSize, setTimeFormat, setTextSize, setTextPosition,
+    restoreFromCloud: restoreSettings,
   } = useSettingsStore();
-  const { colorCategories, addColorCategory, updateColorCategory, removeColorCategory, schedules } = useScheduleStore();
+  const { colorCategories, addColorCategory, updateColorCategory, removeColorCategory, schedules, restoreFromCloud: restoreSchedules } = useScheduleStore();
   const [editingCat, setEditingCat] = useState<ColorCategory | null>(null);
+
+  // ── 구글 로그인 ──
+  const { user, lastSyncAt, setUser, setLastSyncAt } = useAuthStore();
+  const [syncing, setSyncing] = useState(false);
+  const [_request, response, promptAsync] = Google.useAuthRequest({ clientId: GOOGLE_WEB_CLIENT_ID });
+
+  useEffect(() => {
+    if (response?.type !== 'success') return;
+    const accessToken =
+      (response as any).authentication?.accessToken ?? response.params?.access_token;
+    if (!accessToken) return;
+    const credential = GoogleAuthProvider.credential(null, accessToken);
+    setSyncing(true);
+    signInWithCredential(auth, credential)
+      .then(async (cred) => {
+        const newUser = {
+          uid: cred.user.uid,
+          email: cred.user.email ?? '',
+          displayName: cred.user.displayName ?? '',
+        };
+        setUser(newUser);
+        // 로그인 직후 클라우드에서 pull
+        const backup = await pullBackup(newUser.uid);
+        if (backup && backup.updatedAt > lastSyncAt) {
+          restoreSchedules(backup.schedules, backup.colorCategories);
+          restoreSettings(backup.settings as any);
+          setLastSyncAt(backup.updatedAt);
+        }
+      })
+      .catch((e) => Alert.alert('로그인 실패', String(e)))
+      .finally(() => setSyncing(false));
+  }, [response]);
+
+  const handleSignOut = () => {
+    Alert.alert('로그아웃', '로그아웃하시겠습니까?', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '로그아웃',
+        style: 'destructive',
+        onPress: async () => {
+          await signOutGoogle();
+          setUser(null);
+        },
+      },
+    ]);
+  };
+
+  const handleManualSync = async () => {
+    if (!user) return;
+    setSyncing(true);
+    try {
+      const { schedules: sc, colorCategories: cc } = useScheduleStore.getState();
+      const { blockSize: bs, timeFormat: tf, textSize: ts, textPosition: tp, gridStartHour, gridEndHour, darkMode: dm } =
+        useSettingsStore.getState();
+      const settings: BackupSettings = {
+        blockSize: bs, timeFormat: tf, textSize: ts, textPosition: tp, gridStartHour, gridEndHour, darkMode: dm,
+      };
+      await pushBackup(user.uid, { schedules: sc, colorCategories: cc, settings, updatedAt: Date.now() });
+      setLastSyncAt(Date.now());
+    } catch (e) {
+      Alert.alert('동기화 실패', String(e));
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const syncLabel = lastSyncAt === 0 ? '동기화 안 됨' : `${new Date(lastSyncAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} 동기화`;
+
 
   const handleSaveCategory = (cat: ColorCategory) => {
     if (colorCategories.find((c) => c.id === cat.id)) {
@@ -250,6 +322,49 @@ export default function StyleSettingsScreen({ visible, onClose }: Props) {
             </SettingRow>
           </View>
 
+          {/* 계정 / 백업 */}
+          <View style={[styles.section, { backgroundColor: colors.surface }]}>
+            <View style={styles.catHeader}>
+              <Text style={[styles.catHeaderText, { color: colors.text }]}>계정 / 백업</Text>
+              {syncing && <ActivityIndicator size="small" color="#4A90D9" />}
+            </View>
+            {user ? (
+              <View style={acc.loggedIn}>
+                <Text style={[acc.email, { color: colors.text }]}>{user.email}</Text>
+                <Text style={[acc.syncLabel, { color: colors.textSecondary }]}>{syncLabel}</Text>
+                <View style={acc.btnRow}>
+                  <TouchableOpacity
+                    style={[acc.btn, { borderColor: colors.border }]}
+                    onPress={handleManualSync}
+                    disabled={syncing}
+                  >
+                    <Text style={[acc.btnText, { color: '#4A90D9' }]}>지금 동기화</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[acc.btn, { borderColor: colors.border }]}
+                    onPress={handleSignOut}
+                    disabled={syncing}
+                  >
+                    <Text style={[acc.btnText, { color: '#E05555' }]}>로그아웃</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : (
+              <View style={acc.loggedOut}>
+                <Text style={[acc.desc, { color: colors.textSecondary }]}>
+                  Google 계정으로 로그인하면 일정이 자동으로 백업됩니다.
+                </Text>
+                <TouchableOpacity
+                  style={acc.googleBtn}
+                  onPress={() => promptAsync()}
+                  disabled={syncing}
+                >
+                  <Text style={acc.googleBtnText}>Google로 로그인</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+
           {/* 블록 색상 카테고리 */}
           <View style={[styles.section, { backgroundColor: colors.surface }]}>
             <View style={styles.catHeader}>
@@ -306,4 +421,17 @@ const styles = StyleSheet.create({
   catLabel: { fontSize: 14 },
   deleteBtn: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#E0555522', alignItems: 'center', justifyContent: 'center' },
   deleteBtnText: { fontSize: 18, color: '#E05555', lineHeight: 20 },
+});
+
+const acc = StyleSheet.create({
+  loggedIn: { paddingHorizontal: 16, paddingBottom: 16, gap: 6 },
+  email: { fontSize: 14, fontWeight: '600' },
+  syncLabel: { fontSize: 12 },
+  btnRow: { flexDirection: 'row', gap: 10, marginTop: 6 },
+  btn: { flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: 'center', borderWidth: 1 },
+  btnText: { fontSize: 13, fontWeight: '600' },
+  loggedOut: { paddingHorizontal: 16, paddingBottom: 16, gap: 12 },
+  desc: { fontSize: 13, lineHeight: 18 },
+  googleBtn: { backgroundColor: '#4A90D9', borderRadius: 10, paddingVertical: 12, alignItems: 'center' },
+  googleBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
 });

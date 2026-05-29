@@ -1,13 +1,14 @@
 import * as BackgroundFetch from 'expo-background-fetch';
 import * as TaskManager from 'expo-task-manager';
 import { useScheduleStore } from '../store/scheduleStore';
-import { notificationService } from '../services/NotificationService';
 
 export const RESCHEDULE_TASK_NAME = 'reschedule-notifications';
 
 // 백그라운드 / 부팅 후 알람 갱신 태스크 정의 (앱 진입 전에 실행될 수 있으므로 모듈 최상위에 위치)
+// notificationService는 순환 참조 방지를 위해 태스크 실행 시점에 lazy import
 TaskManager.defineTask(RESCHEDULE_TASK_NAME, async () => {
   try {
+    const { notificationService } = require('../services/NotificationService');
     const schedules = useScheduleStore.getState().schedules;
     await notificationService.rescheduleAll(schedules);
     return BackgroundFetch.BackgroundFetchResult.NewData;
