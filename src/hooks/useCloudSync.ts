@@ -3,6 +3,7 @@ import { useScheduleStore } from '../store/scheduleStore';
 import { useSettingsStore } from '../store/settingsStore';
 import { useAuthStore } from '../store/authStore';
 import { pushBackup, BackupSettings } from '../services/SyncService';
+import { updateTodayWidget } from '../widgets/updateWidget';
 
 const DEBOUNCE_MS = 3000;
 
@@ -33,6 +34,7 @@ export function useCloudSync() {
           updatedAt: Date.now(),
         });
         setLastSyncAt(Date.now());
+        updateTodayWidget();
       } catch (e) {
         console.warn('[CloudSync] push 실패:', e);
       }

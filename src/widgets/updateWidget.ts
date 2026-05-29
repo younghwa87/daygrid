@@ -1,0 +1,53 @@
+import React from 'react';
+import { MMKV } from 'react-native-mmkv';
+import { requestWidgetUpdate } from 'react-native-android-widget';
+import dayjs from 'dayjs';
+import { TodayWidget, WidgetSchedule } from './TodayWidget';
+import { Schedule } from '../types';
+
+const widgetMMKV = new MMKV();
+
+function matchesRepeat(s: Schedule, date: string): boolean {
+  if (s.exceptions?.includes(date)) return false;
+  if (!s.repeat || s.repeat === 'none') return s.date === date;
+  const base = dayjs(s.date);
+  const target = dayjs(date);
+  if (target.isBefore(base, 'day')) return false;
+  switch (s.repeat) {
+    case 'daily': return true;
+    case 'weekly': return base.day() === target.day();
+    case 'monthly': return base.date() === target.date();
+    case 'custom': return (s.repeatDays ?? []).includes(target.day());
+    default: return false;
+  }
+}
+
+export function getTodaySchedules(): WidgetSchedule[] {
+  try {
+    const today = dayjs().format('YYYY-MM-DD');
+    const raw = widgetMMKV.getString('schedules');
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    const schedules: Schedule[] = parsed.state?.schedules ?? [];
+    return schedules
+      .filter((s) => !s.isOverflow && matchesRepeat(s, today))
+      .sort((a, b) => a.startTime - b.startTime)
+      .map((s) => ({
+        title: s.title,
+        startTime: s.startTime,
+        color: s.colorCategory?.color ?? '#4A90D9',
+      }));
+  } catch {
+    return [];
+  }
+}
+
+export function updateTodayWidget(): void {
+  const schedules = getTodaySchedules();
+  const dateLabel = dayjs().format('M/D (ddd)');
+  requestWidgetUpdate({
+    widgetName: 'Today',
+    renderWidget: () => React.createElement(TodayWidget, { schedules, dateLabel }),
+    widgetNotFound: () => {},
+  });
+}
