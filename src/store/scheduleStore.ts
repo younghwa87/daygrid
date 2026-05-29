@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { zustandMMKVStorage } from '../storage/mmkvStorage';
 import dayjs from 'dayjs';
 import { Schedule, ColorCategory } from '../types';
 import { DEFAULT_COLOR_CATEGORIES } from '../constants';
@@ -114,7 +114,7 @@ export const useScheduleStore = create<ScheduleStore>()(
     }),
     {
       name: 'schedules',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => zustandMMKVStorage),
       // selectedDate는 앱 시작 시 항상 오늘 날짜로 초기화되어야 하므로 제외
       partialize: (state) => ({
         schedules: state.schedules,

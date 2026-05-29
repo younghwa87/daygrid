@@ -33,7 +33,24 @@
         }
       ],
       "expo-web-browser",
-      "@react-native-google-signin/google-signin"
+      "@react-native-google-signin/google-signin",
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "Today",
+              "label": "Datile 오늘 일정",
+              "minWidth": "180dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "description": "오늘의 일정을 홈 화면에서 확인",
+              "updatePeriodMillis": 1800000
+            }
+          ]
+        }
+      ]
     ],
     "ios": {
       "supportsTablet": true

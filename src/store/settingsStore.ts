@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { zustandMMKVStorage } from '../storage/mmkvStorage';
 
 export type BlockSize = "small" | "medium" | "large";
 export type TimeFormat = "12h" | "24h";
@@ -84,7 +84,7 @@ export const useSettingsStore = create<SettingsStore>()(
     }),
     {
       name: 'settings',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => zustandMMKVStorage),
     }
   )
 );

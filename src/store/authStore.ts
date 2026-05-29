@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { zustandMMKVStorage } from '../storage/mmkvStorage';
 
 export type AuthUser = {
   uid: string;
@@ -25,7 +25,7 @@ export const useAuthStore = create<AuthStore>()(
     }),
     {
       name: 'auth',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => zustandMMKVStorage),
     }
   )
 );
