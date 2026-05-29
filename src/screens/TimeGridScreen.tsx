@@ -71,6 +71,36 @@ export default function TimeGridScreen() {
     setModalState({ mode: 'create', startMinutes, endMinutes });
   }, []);
 
+  const handleMoveSchedule = useCallback(
+    (scheduleId: string, newStartTime: number, newEndTime: number) => {
+      if (hasOverlap(newStartTime, newEndTime, selectedDate, scheduleId)) return;
+      const schedule = allSchedules.find(s => s.id === scheduleId);
+      if (!schedule) return;
+      updateSchedule(scheduleId, { startTime: newStartTime, endTime: newEndTime });
+      if (schedule.hasNotification) {
+        notificationService.cancelAllAlarmsForSchedule(scheduleId).then(() => {
+          notificationService.scheduleAlarmsForSchedule({ ...schedule, startTime: newStartTime, endTime: newEndTime });
+        });
+      }
+    },
+    [allSchedules, hasOverlap, selectedDate, updateSchedule]
+  );
+
+  const handleResizeSchedule = useCallback(
+    (scheduleId: string, newEndTime: number) => {
+      const schedule = allSchedules.find(s => s.id === scheduleId);
+      if (!schedule) return;
+      if (hasOverlap(schedule.startTime, newEndTime, selectedDate, scheduleId)) return;
+      updateSchedule(scheduleId, { endTime: newEndTime });
+      if (schedule.hasNotification) {
+        notificationService.cancelAllAlarmsForSchedule(scheduleId).then(() => {
+          notificationService.scheduleAlarmsForSchedule({ ...schedule, endTime: newEndTime });
+        });
+      }
+    },
+    [allSchedules, hasOverlap, selectedDate, updateSchedule]
+  );
+
   const handleEditSchedule = useCallback((schedule: Schedule) => {
     const original = schedule.isOverflow
       ? (allSchedules.find((s) => s.id === schedule.id) ?? schedule)
@@ -272,6 +302,8 @@ export default function TimeGridScreen() {
             selectedDate={selectedDate}
             onStartCreating={handleStartCreating}
             onEditSchedule={handleEditSchedule}
+            onMoveSchedule={handleMoveSchedule}
+            onResizeSchedule={handleResizeSchedule}
           />
         </View>
       </GestureDetector>

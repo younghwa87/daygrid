@@ -13,7 +13,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Google from 'expo-auth-session/providers/google';
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import { GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
 import { auth, GOOGLE_WEB_CLIENT_ID } from '../services/firebase';
 import { signOutGoogle, pushBackup, pullBackup, BackupSettings } from '../services/SyncService';
@@ -198,34 +198,34 @@ export default function StyleSettingsScreen({ visible, onClose }: Props) {
   // ── 구글 로그인 ──
   const { user, lastSyncAt, setUser, setLastSyncAt } = useAuthStore();
   const [syncing, setSyncing] = useState(false);
-  const [_request, response, promptAsync] = Google.useAuthRequest({ clientId: GOOGLE_WEB_CLIENT_ID });
 
   useEffect(() => {
-    if (response?.type !== 'success') return;
-    const accessToken =
-      (response as any).authentication?.accessToken ?? response.params?.access_token;
-    if (!accessToken) return;
-    const credential = GoogleAuthProvider.credential(null, accessToken);
+    GoogleSignin.configure({ webClientId: GOOGLE_WEB_CLIENT_ID });
+  }, []);
+
+  async function handleGoogleSignIn() {
     setSyncing(true);
-    signInWithCredential(auth, credential)
-      .then(async (cred) => {
-        const newUser = {
-          uid: cred.user.uid,
-          email: cred.user.email ?? '',
-          displayName: cred.user.displayName ?? '',
-        };
-        setUser(newUser);
-        // 로그인 직후 클라우드에서 pull
-        const backup = await pullBackup(newUser.uid);
-        if (backup && backup.updatedAt > lastSyncAt) {
-          restoreSchedules(backup.schedules, backup.colorCategories);
-          restoreSettings(backup.settings as any);
-          setLastSyncAt(backup.updatedAt);
-        }
-      })
-      .catch((e) => Alert.alert('로그인 실패', String(e)))
-      .finally(() => setSyncing(false));
-  }, [response]);
+    try {
+      await GoogleSignin.hasPlayServices();
+      await GoogleSignin.signIn();
+      const tokens = await GoogleSignin.getTokens();
+      const credential = GoogleAuthProvider.credential(tokens.idToken);
+      const cred = await signInWithCredential(auth, credential);
+      const newUser = { uid: cred.user.uid, email: cred.user.email ?? '', displayName: cred.user.displayName ?? '' };
+      setUser(newUser);
+      const backup = await pullBackup(newUser.uid);
+      if (backup && backup.updatedAt > lastSyncAt) {
+        restoreSchedules(backup.schedules, backup.colorCategories);
+        restoreSettings(backup.settings as any);
+        setLastSyncAt(backup.updatedAt);
+      }
+    } catch (e: any) {
+      if (e?.code === statusCodes.SIGN_IN_CANCELLED) return;
+      Alert.alert('로그인 실패', String(e));
+    } finally {
+      setSyncing(false);
+    }
+  }
 
   const handleSignOut = () => {
     Alert.alert('로그아웃', '로그아웃하시겠습니까?', [
@@ -356,7 +356,7 @@ export default function StyleSettingsScreen({ visible, onClose }: Props) {
                 </Text>
                 <TouchableOpacity
                   style={acc.googleBtn}
-                  onPress={() => promptAsync()}
+                  onPress={handleGoogleSignIn}
                   disabled={syncing}
                 >
                   <Text style={acc.googleBtnText}>Google로 로그인</Text>

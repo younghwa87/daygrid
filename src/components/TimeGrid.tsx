@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, ScrollView, StyleSheet, Text } from 'react-native';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
+import { LinearGradient } from 'expo-linear-gradient';
 import dayjs from 'dayjs';
 import { TIME_LABEL_WIDTH } from '../constants';
 import { getEventSegments } from '../utils/timeUtils';
@@ -17,17 +18,34 @@ type Props = {
   selectedDate: string;
   onStartCreating: (startMinutes: number, endMinutes: number) => void;
   onEditSchedule: (schedule: Schedule) => void;
+  onMoveSchedule: (scheduleId: string, newStartTime: number, newEndTime: number) => void;
+  onResizeSchedule: (scheduleId: string, newEndTime: number) => void;
 };
 
 type GhostBlock = { startMins: number; endMins: number } | null;
 
-export default React.memo(function TimeGrid({ schedules, selectedDate, onStartCreating, onEditSchedule }: Props) {
+type DragState = {
+  scheduleId: string;
+  duration: number;
+  offsetMins: number;
+  currentStartMins: number;
+} | null;
+
+type ResizeState = {
+  scheduleId: string;
+  startTime: number;
+  currentEndMins: number;
+} | null;
+
+export default React.memo(function TimeGrid({ schedules, selectedDate, onStartCreating, onEditSchedule, onMoveSchedule, onResizeSchedule }: Props) {
   const { colors, isDark } = useAppColors();
   const { rowHeight, timeFormat, gridStartHour, gridEndHour, fontSize, textPosition } = useSettingsStore();
 
   const [scrollEnabled, setScrollEnabled] = useState(true);
   const [colWidth, setColWidth] = useState(0);
   const [ghost, setGhost] = useState<GhostBlock>(null);
+  const [dragState, setDragState] = useState<DragState>(null);
+  const [resizeState, setResizeState] = useState<ResizeState>(null);
   const [currentMins, setCurrentMins] = useState(() => dayjs().hour() * 60 + dayjs().minute());
 
   const scrollViewRef = useRef<ScrollView>(null);
@@ -36,6 +54,9 @@ export default React.memo(function TimeGrid({ schedules, selectedDate, onStartCr
   const ghostEndRef = useRef(0);
   const colWidthRef = useRef(0);
   const hitScheduleRef = useRef<Schedule | undefined>(undefined);
+  const resizeTargetRef = useRef<Schedule | undefined>(undefined);
+  const dragStateRef = useRef<DragState>(null);
+  const resizeStateRef = useRef<ResizeState>(null);
 
   const numRows = gridEndHour - gridStartHour;
   const totalHeight = numRows * rowHeight;
@@ -66,15 +87,45 @@ export default React.memo(function TimeGrid({ schedules, selectedDate, onStartCr
     return schedules.find((s) => s.startTime <= mins && mins < s.endTime);
   }
 
-  const gesture = Gesture.Pan()
+  // 일정 마지막 10분 영역 → 크기 조절 대상
+  function findResizeTargetAt(x: number, y: number): Schedule | undefined {
+    const mins = posToMins(x, y);
+    return schedules.find((s) => !s.isOverflow && mins >= s.endTime - 10 && mins < s.endTime);
+  }
+
+  const tapGesture = Gesture.Tap()
+    .runOnJS(true)
+    .maxDuration(300)
+    .onEnd((e, success) => {
+      if (!success) return;
+      const hit = findScheduleAt(e.x, e.y);
+      if (hit) onEditSchedule(hit);
+    });
+
+  const panGesture = Gesture.Pan()
     .runOnJS(true)
     .activateAfterLongPress(400)
     .onBegin((e) => {
-      hitScheduleRef.current = findScheduleAt(e.x, e.y);
+      resizeTargetRef.current = findResizeTargetAt(e.x, e.y);
+      hitScheduleRef.current = resizeTargetRef.current ? undefined : findScheduleAt(e.x, e.y);
     })
     .onStart((e) => {
-      if (hitScheduleRef.current) {
-        onEditSchedule(hitScheduleRef.current);
+      const resizeTarget = resizeTargetRef.current;
+      if (resizeTarget) {
+        const newResizeState: ResizeState = { scheduleId: resizeTarget.id, startTime: resizeTarget.startTime, currentEndMins: resizeTarget.endTime };
+        resizeStateRef.current = newResizeState;
+        setResizeState(newResizeState);
+        setScrollEnabled(false);
+        return;
+      }
+      const hit = hitScheduleRef.current;
+      if (hit && !hit.isOverflow) {
+        const duration = hit.endTime - hit.startTime;
+        const offsetMins = posToMins(e.x, e.y) - hit.startTime;
+        const newDragState: DragState = { scheduleId: hit.id, duration, offsetMins, currentStartMins: hit.startTime };
+        dragStateRef.current = newDragState;
+        setDragState(newDragState);
+        setScrollEnabled(false);
         return;
       }
       if (colWidthRef.current === 0) return;
@@ -86,6 +137,25 @@ export default React.memo(function TimeGrid({ schedules, selectedDate, onStartCr
       setScrollEnabled(false);
     })
     .onUpdate((e) => {
+      if (resizeStateRef.current) {
+        const newEnd = posToMins(e.x, e.y) + 10;
+        const minEnd = resizeStateRef.current.startTime + 10;
+        const currentEndMins = Math.max(minEnd, Math.min(newEnd, gridEndHour * 60));
+        const updated = { ...resizeStateRef.current, currentEndMins };
+        resizeStateRef.current = updated;
+        setResizeState(updated);
+        return;
+      }
+      if (dragStateRef.current) {
+        const rawStart = posToMins(e.x, e.y) - dragStateRef.current.offsetMins;
+        const snapped = Math.round(rawStart / 10) * 10;
+        const maxStart = gridEndHour * 60 - dragStateRef.current.duration;
+        const newStartMins = Math.max(gridStartHour * 60, Math.min(snapped, maxStart));
+        const updated = { ...dragStateRef.current, currentStartMins: newStartMins };
+        dragStateRef.current = updated;
+        setDragState(updated);
+        return;
+      }
       if (!isCreatingRef.current || colWidthRef.current === 0) return;
       const curMins = posToMins(e.x, e.y) + 10;
       const endMins = Math.max(ghostStartRef.current + 10, curMins);
@@ -93,16 +163,37 @@ export default React.memo(function TimeGrid({ schedules, selectedDate, onStartCr
       setGhost({ startMins: ghostStartRef.current, endMins });
     })
     .onEnd(() => {
+      if (resizeStateRef.current) {
+        onResizeSchedule(resizeStateRef.current.scheduleId, resizeStateRef.current.currentEndMins);
+        resizeStateRef.current = null;
+        setResizeState(null);
+        setScrollEnabled(true);
+        return;
+      }
+      if (dragStateRef.current) {
+        const { scheduleId, duration, currentStartMins } = dragStateRef.current;
+        onMoveSchedule(scheduleId, currentStartMins, currentStartMins + duration);
+        dragStateRef.current = null;
+        setDragState(null);
+        setScrollEnabled(true);
+        return;
+      }
       if (isCreatingRef.current) onStartCreating(ghostStartRef.current, ghostEndRef.current);
       isCreatingRef.current = false;
       setGhost(null);
       setScrollEnabled(true);
     })
     .onFinalize(() => {
+      resizeStateRef.current = null;
+      setResizeState(null);
+      dragStateRef.current = null;
+      setDragState(null);
       isCreatingRef.current = false;
       setGhost(null);
       setScrollEnabled(true);
     });
+
+  const gesture = Gesture.Race(tapGesture, panGesture);
 
   const isToday = selectedDate === dayjs().format('YYYY-MM-DD');
   const nowLineY =
@@ -116,13 +207,18 @@ export default React.memo(function TimeGrid({ schedules, selectedDate, onStartCr
     color: string,
     title: string,
     keyPrefix: string,
-    alpha: string = 'CC'
+    alpha: string = 'CC',
+    showResizeHandle: boolean = false
   ) {
     const cw = colWidthRef.current;
     if (cw === 0) return null;
-    return getEventSegments(startMins, endMins, gridStartHour, gridEndHour).map((seg, i) => (
-      <View
+    const segs = getEventSegments(startMins, endMins, gridStartHour, gridEndHour);
+    return segs.map((seg, i) => (
+      <LinearGradient
         key={`${keyPrefix}-${i}`}
+        colors={[color + alpha, color + Math.round(parseInt(alpha, 16) * 0.6).toString(16).padStart(2, '0')]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
         style={[
           styles.eventSegment,
           {
@@ -130,7 +226,6 @@ export default React.memo(function TimeGrid({ schedules, selectedDate, onStartCr
             left: seg.startCol * cw,
             width: (seg.endCol - seg.startCol) * cw,
             height: rowHeight,
-            backgroundColor: color + alpha,
             borderLeftWidth: i === 0 ? 3 : 0,
             borderLeftColor: color,
           },
@@ -141,7 +236,10 @@ export default React.memo(function TimeGrid({ schedules, selectedDate, onStartCr
             {title}
           </Text>
         )}
-      </View>
+        {showResizeHandle && i === segs.length - 1 && (
+          <View style={styles.resizeHandle} />
+        )}
+      </LinearGradient>
     ));
   }
 
@@ -270,12 +368,26 @@ export default React.memo(function TimeGrid({ schedules, selectedDate, onStartCr
 
             {/* 일정 블록 */}
             {schedules.map((s) => {
+              const isDragging = dragState?.scheduleId === s.id;
+              const isResizing = resizeState?.scheduleId === s.id;
               const isSleep = s.scheduleType === 'sleep';
               const color = isSleep ? '#6366F1' : s.colorCategory.color;
-              const alpha = isSleep ? '55' : s.isOverflow ? '77' : 'CC';
+              const alpha = isDragging ? '33' : (isSleep ? '55' : s.isOverflow ? '77' : 'CC');
               const title = isSleep ? `🌙 ${s.title}` : s.title;
-              return renderSegments(s.startTime, s.endTime, color, title, s.id, alpha);
+              const endTime = isResizing ? (resizeState?.currentEndMins ?? s.endTime) : s.endTime;
+              const showHandle = !s.isOverflow && !isDragging;
+              return renderSegments(s.startTime, endTime, color, title, s.id, alpha, showHandle);
             })}
+
+            {/* 드래그 이동 고스트 */}
+            {dragState && (() => {
+              const dragging = schedules.find(s => s.id === dragState.scheduleId);
+              if (!dragging) return null;
+              const isSleep = dragging.scheduleType === 'sleep';
+              const color = isSleep ? '#6366F1' : dragging.colorCategory.color;
+              const title = isSleep ? `🌙 ${dragging.title}` : dragging.title;
+              return renderSegments(dragState.currentStartMins, dragState.currentStartMins + dragState.duration, color, title, 'drag-ghost');
+            })()}
 
             {/* 생성 중 고스트 */}
             {ghost && renderSegments(ghost.startMins, ghost.endMins, '#4A90D9', '', 'ghost')}
@@ -311,4 +423,5 @@ const styles = StyleSheet.create({
   nowLine: { position: 'absolute', left: 0, right: 0, flexDirection: 'row', alignItems: 'center', zIndex: 10 },
   nowDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#E05555', marginLeft: -4 },
   nowLineBar: { flex: 1, height: 1.5, backgroundColor: '#E05555' },
+  resizeHandle: { position: 'absolute', right: 3, bottom: 3, width: 14, height: 3, borderRadius: 1.5, backgroundColor: 'rgba(255,255,255,0.55)' },
 });
