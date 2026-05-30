@@ -34,6 +34,7 @@ export function getTodaySchedules(): WidgetSchedule[] {
       .filter((s) => !s.isOverflow && matchesRepeat(s, today))
       .sort((a, b) => a.startTime - b.startTime)
       .map((s) => ({
+        id: s.id,
         title: s.title,
         startTime: s.startTime,
         endTime: s.endTime,

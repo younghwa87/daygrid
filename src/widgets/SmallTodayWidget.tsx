@@ -17,7 +17,8 @@ function formatTime(minutes: number): string {
 export function SmallTodayWidget({ schedule, isRunning }: Props) {
   return (
     <FlexWidget
-      clickAction="OPEN_APP"
+      clickAction={schedule ? 'OPEN_URI' : 'OPEN_APP'}
+      clickActionData={schedule ? { uri: `datile://edit?id=${schedule.id}` } : undefined}
       style={{
         height: 'match_parent',
         width: 'match_parent',
@@ -31,7 +32,7 @@ export function SmallTodayWidget({ schedule, isRunning }: Props) {
     >
       {schedule === null && (
         <TextWidget
-          text="오늘 일정 없음"
+          text="현재 일정 없음"
           style={{ fontSize: 12, color: '#CCCCCC' }}
         />
       )}

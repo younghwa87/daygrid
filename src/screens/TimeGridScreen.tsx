@@ -4,6 +4,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  Linking,
 } from 'react-native';
 import { AppText } from '../components/AppText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -66,6 +67,28 @@ export default function TimeGridScreen() {
   const [calendarVisible, setCalendarVisible] = useState(false);
 
   useNotificationHandler();
+
+  // 위젯 딥링크 처리
+  useEffect(() => {
+    const openFromUrl = (url: string | null) => {
+      if (!url) return;
+      if (url === 'datile://add') {
+        const now = dayjs();
+        const startMins = Math.ceil((now.hour() * 60 + now.minute()) / 10) * 10;
+        setModalState({ mode: 'create', startMinutes: startMins, endMinutes: startMins + 60 });
+      } else if (url.startsWith('datile://edit?id=')) {
+        const id = url.replace('datile://edit?id=', '');
+        const schedule = allSchedules.find((s) => s.id === id);
+        if (!schedule) return;
+        setSelectedDate(schedule.date);
+        setModalState({ mode: 'edit', schedule, editScope: schedule.repeat === 'none' ? 'all' : 'this' });
+      }
+    };
+
+    Linking.getInitialURL().then(openFromUrl);
+    const sub = Linking.addEventListener('url', ({ url }) => openFromUrl(url));
+    return () => sub.remove();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleStartCreating = useCallback((startMinutes: number, endMinutes: number) => {
     setModalState({ mode: 'create', startMinutes, endMinutes });

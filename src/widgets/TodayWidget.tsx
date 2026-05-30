@@ -3,6 +3,7 @@
 import { FlexWidget, TextWidget } from 'react-native-android-widget';
 
 export type WidgetSchedule = {
+  id: string;
   title: string;
   startTime: number;
   endTime: number;
@@ -54,10 +55,23 @@ export function TodayWidget({ schedules, dateLabel }: Props) {
             style={{ fontSize: 12, color: '#AAAAAA' }}
           />
         </FlexWidget>
-        <TextWidget
-          text="+"
-          style={{ fontSize: 22, color: '#4A90D9', fontWeight: 'bold' }}
-        />
+        <FlexWidget
+          clickAction="OPEN_URI"
+          clickActionData={{ uri: 'datile://add' }}
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 18,
+            backgroundColor: '#4A90D922',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <TextWidget
+            text="+"
+            style={{ fontSize: 26, color: '#4A90D9', fontWeight: 'bold' }}
+          />
+        </FlexWidget>
       </FlexWidget>
 
       {/* 구분선 */}
@@ -91,6 +105,8 @@ export function TodayWidget({ schedules, dateLabel }: Props) {
 function ScheduleRow({ item }: { item: WidgetSchedule }) {
   return (
     <FlexWidget
+      clickAction="OPEN_URI"
+      clickActionData={{ uri: `datile://edit?id=${item.id}` }}
       style={{
         flexDirection: 'row',
         alignItems: 'center',
