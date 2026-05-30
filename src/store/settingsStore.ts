@@ -6,7 +6,7 @@ export type BlockSize = "small" | "medium" | "large";
 export type TimeFormat = "12h" | "24h";
 export type TextSize = "small" | "medium" | "large";
 export type TextPosition = "left" | "center" | "right";
-export type FontFamily = "system" | "pretendard" | "noto-sans-kr";
+export type FontFamily = "system" | "pretendard" | "nanum-pen" | "nanum-brush" | "do-hyeon" | "gaegu";
 
 export const ROW_HEIGHTS: Record<BlockSize, number> = {
   small: 44,

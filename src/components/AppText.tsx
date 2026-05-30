@@ -3,8 +3,11 @@ import { Text, TextProps, StyleSheet } from 'react-native';
 import { useSettingsStore } from '../store/settingsStore';
 
 const FONT_MAP = {
-  pretendard: { regular: 'Pretendard-Regular', bold: 'Pretendard-Bold' },
-  'noto-sans-kr': { regular: 'NotoSansKR_400Regular', bold: 'NotoSansKR_700Bold' },
+  pretendard:    { regular: 'Pretendard-Regular',        bold: 'Pretendard-Bold' },
+  'nanum-pen':   { regular: 'NanumPenScript_400Regular', bold: 'NanumPenScript_400Regular' },
+  'nanum-brush': { regular: 'NanumBrushScript_400Regular', bold: 'NanumBrushScript_400Regular' },
+  'do-hyeon':    { regular: 'DoHyeon_400Regular',        bold: 'DoHyeon_400Regular' },
+  gaegu:         { regular: 'Gaegu_400Regular',          bold: 'Gaegu_700Bold' },
 } as const;
 
 export function AppText({ style, ...props }: TextProps) {

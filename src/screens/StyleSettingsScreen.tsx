@@ -68,11 +68,95 @@ const sc = StyleSheet.create({
   text: { fontSize: 12, fontWeight: '500' },
 });
 
+// ──────────── 폰트 드랍다운 ────────────
+const FONT_OPTIONS: { value: FontFamily; label: string }[] = [
+  { value: 'system',      label: '시스템 기본' },
+  { value: 'pretendard',  label: 'Pretendard' },
+  { value: 'nanum-pen',   label: '나눔손글씨 펜' },
+  { value: 'nanum-brush', label: '나눔손글씨 붓' },
+  { value: 'do-hyeon',    label: '도현' },
+  { value: 'gaegu',       label: '개구' },
+];
+
+function FontDropdown({ value, onChange }: { value: FontFamily; onChange: (v: FontFamily) => void }) {
+  const { colors } = useAppColors();
+  const [open, setOpen] = useState(false);
+  const selectedLabel = FONT_OPTIONS.find((o) => o.value === value)?.label ?? value;
+
+  return (
+    <View>
+      <TouchableOpacity
+        style={[fd.trigger, { borderColor: colors.border, backgroundColor: colors.background }]}
+        onPress={() => setOpen((v) => !v)}
+      >
+        <AppText style={[fd.triggerText, { color: colors.text }]}>{selectedLabel}</AppText>
+        <AppText style={[fd.arrow, { color: colors.textSecondary }]}>{open ? '▲' : '▼'}</AppText>
+      </TouchableOpacity>
+      {open && (
+        <View style={[fd.list, { borderColor: colors.border, backgroundColor: colors.surface }]}>
+          {FONT_OPTIONS.map((opt) => (
+            <TouchableOpacity
+              key={opt.value}
+              style={[fd.option, { borderBottomColor: colors.border }]}
+              onPress={() => { onChange(opt.value); setOpen(false); }}
+            >
+              <AppText style={[fd.optionText, { color: opt.value === value ? '#4A90D9' : colors.text }]}>
+                {opt.label}
+              </AppText>
+              {opt.value === value && (
+                <AppText style={fd.check}>✓</AppText>
+              )}
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+const fd = StyleSheet.create({
+  trigger: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    gap: 6,
+    minWidth: 140,
+  },
+  triggerText: { flex: 1, fontSize: 13 },
+  arrow: { fontSize: 10 },
+  list: {
+    position: 'absolute',
+    right: 0,
+    top: 36,
+    minWidth: 160,
+    borderWidth: 1,
+    borderRadius: 10,
+    zIndex: 999,
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 8,
+    elevation: 8,
+    overflow: 'hidden',
+  },
+  option: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  optionText: { flex: 1, fontSize: 14 },
+  check: { fontSize: 14, color: '#4A90D9', fontWeight: '600' },
+});
+
 // ──────────── 설정 행 ────────────
-function SettingRow({ label, children, last = false }: { label: string; children: React.ReactNode; last?: boolean }) {
+function SettingRow({ label, children, last = false, zIndex }: { label: string; children: React.ReactNode; last?: boolean; zIndex?: number }) {
   const { colors } = useAppColors();
   return (
-    <View style={[row.wrap, !last && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }]}>
+    <View style={[row.wrap, !last && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }, zIndex ? { zIndex } : undefined]}>
       <AppText style={[row.label, { color: colors.text }]}>{label}</AppText>
       {children}
     </View>
@@ -301,7 +385,7 @@ export default function StyleSettingsScreen({ visible, onClose }: Props) {
           <GridPreview />
 
           {/* 화면 설정 */}
-          <View style={[styles.section, { backgroundColor: colors.surface }]}>
+          <View style={[styles.section, { backgroundColor: colors.surface, overflow: 'visible', zIndex: 10 }]}>
             <SettingRow label="다크 모드">
               <Switch
                 value={darkMode}
@@ -322,8 +406,8 @@ export default function StyleSettingsScreen({ visible, onClose }: Props) {
             <SettingRow label="시간 표기">
               <SegCtrl<TimeFormat> options={['12h','24h']} value={timeFormat} onChange={setTimeFormat} labelMap={{ '12h':'12시간', '24h':'24시간' }} />
             </SettingRow>
-            <SettingRow label="폰트" last>
-              <SegCtrl<FontFamily> options={['system','pretendard','noto-sans-kr']} value={fontFamily} onChange={setFontFamily} labelMap={{ system:'기본', pretendard:'Pretendard', 'noto-sans-kr':'Noto Sans' }} />
+            <SettingRow label="폰트" last zIndex={10}>
+              <FontDropdown value={fontFamily} onChange={setFontFamily} />
             </SettingRow>
           </View>
 
@@ -415,7 +499,7 @@ const styles = StyleSheet.create({
   backBtn: { width: 44 },
   backText: { fontSize: 24, lineHeight: 26 },
   headerTitle: { flex: 1, textAlign: 'center', fontSize: 16, fontWeight: '600' },
-  section: { marginHorizontal: 16, marginBottom: 16, borderRadius: 12, overflow: 'hidden' },
+  section: { marginHorizontal: 16, marginBottom: 16, borderRadius: 12, overflow: 'hidden', zIndex: 1 },
   catHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 },
   catHeaderText: { fontSize: 15, fontWeight: '500' },
   addBtn: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, backgroundColor: '#4A90D922' },
