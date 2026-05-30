@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -15,5 +16,7 @@ export const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID
 export const GOOGLE_ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? '';
 
 export const firebaseApp = initializeApp(firebaseConfig);
-export const auth = getAuth(firebaseApp);
+export const auth = initializeAuth(firebaseApp, {
+  persistence: getReactNativePersistence(AsyncStorage),
+});
 export const db = getFirestore(firebaseApp);
