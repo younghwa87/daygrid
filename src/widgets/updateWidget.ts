@@ -30,8 +30,9 @@ export function getTodaySchedules(): WidgetSchedule[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     const schedules: Schedule[] = parsed.state?.schedules ?? [];
+    const now = dayjs().hour() * 60 + dayjs().minute();
     return schedules
-      .filter((s) => !s.isOverflow && matchesRepeat(s, today))
+      .filter((s) => !s.isOverflow && matchesRepeat(s, today) && s.endTime > now)
       .sort((a, b) => a.startTime - b.startTime)
       .map((s) => ({
         id: s.id,

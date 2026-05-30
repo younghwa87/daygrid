@@ -197,10 +197,6 @@ export default React.memo(function TimeGrid({ schedules, selectedDate, onStartCr
   const gesture = Gesture.Race(tapGesture, panGesture);
 
   const isToday = selectedDate === dayjs().format('YYYY-MM-DD');
-  const nowLineY =
-    isToday && currentMins >= gridStartHour * 60 && currentMins < gridEndHour * 60
-      ? ((currentMins - gridStartHour * 60) / 60) * rowHeight
-      : null;
 
   function renderSegments(
     startMins: number,
@@ -393,13 +389,6 @@ export default React.memo(function TimeGrid({ schedules, selectedDate, onStartCr
             {/* 생성 중 고스트 */}
             {ghost && renderSegments(ghost.startMins, ghost.endMins, '#4A90D9', '', 'ghost')}
 
-            {/* 현재 시각 라인 */}
-            {nowLineY !== null && (
-              <View style={[styles.nowLine, { top: nowLineY }]}>
-                <View style={styles.nowDot} />
-                <View style={styles.nowLineBar} />
-              </View>
-            )}
           </View>
         </GestureDetector>
       </View>
@@ -421,8 +410,5 @@ const styles = StyleSheet.create({
   cell: { flex: 1 },
   eventSegment: { position: 'absolute', paddingHorizontal: 4, paddingVertical: 2, overflow: 'hidden' },
   eventTitle: { fontWeight: '600', color: '#fff' },
-  nowLine: { position: 'absolute', left: 0, right: 0, flexDirection: 'row', alignItems: 'center', zIndex: 10 },
-  nowDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#E05555', marginLeft: -4 },
-  nowLineBar: { flex: 1, height: 1.5, backgroundColor: '#E05555' },
-  resizeHandle: { position: 'absolute', right: 3, bottom: 3, width: 14, height: 3, borderRadius: 1.5, backgroundColor: 'rgba(255,255,255,0.55)' },
+resizeHandle: { position: 'absolute', right: 3, bottom: 3, width: 14, height: 3, borderRadius: 1.5, backgroundColor: 'rgba(255,255,255,0.55)' },
 });

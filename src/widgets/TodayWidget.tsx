@@ -15,14 +15,31 @@ type Props = {
   dateLabel: string;
 };
 
+type DisplayMode = 'full' | 'compact' | 'mini';
+
 function formatTime(minutes: number): string {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
+function getMode(count: number): DisplayMode {
+  if (count <= 3) return 'full';
+  if (count <= 5) return 'compact';
+  return 'mini';
+}
+
+function getMaxItems(mode: DisplayMode): number {
+  if (mode === 'full') return 3;
+  if (mode === 'compact') return 5;
+  return 6;
+}
+
 export function TodayWidget({ schedules, dateLabel }: Props) {
-  const items = schedules.slice(0, 3);
+  const mode = getMode(schedules.length);
+  const maxItems = getMaxItems(mode);
+  const items = schedules.slice(0, maxItems);
+  const overflow = schedules.length - maxItems;
 
   return (
     <FlexWidget
@@ -42,7 +59,7 @@ export function TodayWidget({ schedules, dateLabel }: Props) {
           flexDirection: 'row',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: 12,
+          marginBottom: 10,
         }}
       >
         <FlexWidget style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -76,64 +93,103 @@ export function TodayWidget({ schedules, dateLabel }: Props) {
 
       {/* 구분선 */}
       <FlexWidget
-        style={{ height: 1, backgroundColor: '#F0F0F0', marginBottom: 12 }}
+        style={{ height: 1, backgroundColor: '#F0F0F0', marginBottom: 10 }}
       />
 
       {/* 일정 없음 */}
       {items.length === 0 && (
         <TextWidget
-          text="오늘 일정이 없습니다"
-          style={{ fontSize: 14, color: '#CCCCCC' }}
+          text="남은 일정이 없습니다"
+          style={{ fontSize: 13, color: '#CCCCCC' }}
         />
       )}
 
-      {/* 일정 목록 */}
-      {items.length > 0 && items[0] && <ScheduleRow item={items[0]} />}
-      {items.length > 1 && items[1] && <ScheduleRow item={items[1]} />}
-      {items.length > 2 && items[2] && <ScheduleRow item={items[2]} />}
+      {/* 일정 목록 (최대 6개) */}
+      {items.length > 0 && items[0] && <ScheduleRow item={items[0]} mode={mode} />}
+      {items.length > 1 && items[1] && <ScheduleRow item={items[1]} mode={mode} />}
+      {items.length > 2 && items[2] && <ScheduleRow item={items[2]} mode={mode} />}
+      {items.length > 3 && items[3] && <ScheduleRow item={items[3]} mode={mode} />}
+      {items.length > 4 && items[4] && <ScheduleRow item={items[4]} mode={mode} />}
+      {items.length > 5 && items[5] && <ScheduleRow item={items[5]} mode={mode} />}
 
-      {schedules.length > 3 && (
+      {overflow > 0 && (
         <TextWidget
-          text={`+${schedules.length - 3}개 더`}
-          style={{ fontSize: 11, color: '#CCCCCC', marginTop: 6 }}
+          text={`+${overflow}개 더`}
+          style={{ fontSize: 10, color: '#CCCCCC' }}
         />
       )}
     </FlexWidget>
   );
 }
 
-function ScheduleRow({ item }: { item: WidgetSchedule }) {
+function ScheduleRow({ item, mode }: { item: WidgetSchedule; mode: DisplayMode }) {
+  const uri = `datile://edit?id=${item.id}`;
+  const color = item.color as `#${string}`;
+
+  if (mode === 'full') {
+    return (
+      <FlexWidget
+        clickAction="OPEN_URI"
+        clickActionData={{ uri }}
+        style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}
+      >
+        <FlexWidget
+          style={{ width: 4, height: 30, borderRadius: 2, backgroundColor: color, marginRight: 10 }}
+        />
+        <FlexWidget style={{ flexDirection: 'column' }}>
+          <TextWidget
+            text={item.title}
+            style={{ fontSize: 13, color: '#222222', fontWeight: 'bold', marginBottom: 2 }}
+          />
+          <TextWidget
+            text={`${formatTime(item.startTime)} - ${formatTime(item.endTime)}`}
+            style={{ fontSize: 11, color: '#AAAAAA' }}
+          />
+        </FlexWidget>
+      </FlexWidget>
+    );
+  }
+
+  if (mode === 'compact') {
+    return (
+      <FlexWidget
+        clickAction="OPEN_URI"
+        clickActionData={{ uri }}
+        style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 7 }}
+      >
+        <FlexWidget
+          style={{ width: 3, height: 22, borderRadius: 2, backgroundColor: color, marginRight: 8 }}
+        />
+        <TextWidget
+          text={item.title}
+          style={{ fontSize: 12, color: '#222222', fontWeight: 'bold' }}
+        />
+        <TextWidget
+          text={`  ${formatTime(item.startTime)}-${formatTime(item.endTime)}`}
+          style={{ fontSize: 10, color: '#AAAAAA' }}
+        />
+      </FlexWidget>
+    );
+  }
+
+  // mini
   return (
     <FlexWidget
       clickAction="OPEN_URI"
-      clickActionData={{ uri: `datile://edit?id=${item.id}` }}
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 12,
-      }}
+      clickActionData={{ uri }}
+      style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 5 }}
     >
-      {/* 색상바 */}
       <FlexWidget
-        style={{
-          width: 4,
-          height: 32,
-          borderRadius: 2,
-          backgroundColor: item.color as `#${string}`,
-          marginRight: 10,
-        }}
+        style={{ width: 3, height: 16, borderRadius: 2, backgroundColor: color, marginRight: 8 }}
       />
-      {/* 제목 + 시간 */}
-      <FlexWidget style={{ flexDirection: 'column' }}>
-        <TextWidget
-          text={item.title}
-          style={{ fontSize: 14, color: '#222222', fontWeight: 'bold', marginBottom: 2 }}
-        />
-        <TextWidget
-          text={`${formatTime(item.startTime)} - ${formatTime(item.endTime)}`}
-          style={{ fontSize: 12, color: '#AAAAAA' }}
-        />
-      </FlexWidget>
+      <TextWidget
+        text={item.title}
+        style={{ fontSize: 11, color: '#333333', fontWeight: 'bold' }}
+      />
+      <TextWidget
+        text={`  ${formatTime(item.startTime)}`}
+        style={{ fontSize: 9, color: '#AAAAAA' }}
+      />
     </FlexWidget>
   );
 }
