@@ -320,13 +320,43 @@ export default React.memo(function TimeGrid({ schedules, selectedDate, onStartCr
             {/* 여백 블록 */}
             {colWidth > 0 && freeBlocks.map((block) => (
               <EmptyBlock
-                key={block.id}
+                key={`${block.id}-${rowHeight}`}
                 freeBlock={block}
                 rowHeight={rowHeight}
                 gridStartMin={gridStartHour * 60}
                 onPressAdd={(startMin, endMin) => onStartCreating(startMin, endMin)}
               />
             ))}
+
+            {/* 격자선 오버레이 (EmptyBlock 위에 재렌더) */}
+            <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+              {hourRows.map((hour) => (
+                <View
+                  key={`ov-h-${hour}`}
+                  style={{
+                    position: 'absolute',
+                    top: (hour - gridStartHour) * rowHeight,
+                    left: 0,
+                    right: 0,
+                    height: StyleSheet.hairlineWidth,
+                    backgroundColor: colors.hourLine,
+                  }}
+                />
+              ))}
+              {colWidth > 0 && Array.from({ length: COLS - 1 }, (_, i) => (
+                <View
+                  key={`ov-v-${i}`}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    bottom: 0,
+                    left: (i + 1) * colWidth,
+                    width: StyleSheet.hairlineWidth,
+                    backgroundColor: colors.halfHourLine,
+                  }}
+                />
+              ))}
+            </View>
 
             {/* 현재 시간 칸 빗금 */}
             {hatchCell && (() => {

@@ -20,9 +20,14 @@ interface Props {
 export default function EmptyBlock({ freeBlock, rowHeight, gridStartMin, onPressAdd }: Props) {
   const { isDark } = useAppColors();
 
-  const top = ((freeBlock.startMin - gridStartMin) / 60) * rowHeight;
-  const height = freeBlock.durationHours * rowHeight;
+  // 상단: floor 스냅, 하단: ceil 스냅 → 인접 스케줄 tail 구간 흰색 공백 제거
+  const snappedTop = Math.floor((freeBlock.startMin - gridStartMin) / 60) * rowHeight;
+  const snappedBottom = Math.ceil((freeBlock.endMin - gridStartMin) / 60) * rowHeight;
+  const top = snappedTop;
+  const height = snappedBottom - snappedTop;
   const showAddBtn = height >= 36;
+  // 라벨·내용은 실제 여백 시작 위치(스냅 전 top)에서 표시
+  const contentOffset = ((freeBlock.startMin - gridStartMin) / 60) * rowHeight - snappedTop;
 
   const outerStyle = [s.block, { top, height }];
 
@@ -37,11 +42,9 @@ export default function EmptyBlock({ freeBlock, rowHeight, gridStartMin, onPress
   ) : null;
 
   if (freeBlock.quality === 'micro') {
+    // 점선 테두리 제거 — 스냅 후 row 전체를 채울 때 점선이 격자선처럼 보이는 문제 방지
     return (
-      <View
-        style={[outerStyle, s.micro, isDark && s.microDark]}
-        pointerEvents="box-none"
-      >
+      <View style={outerStyle} pointerEvents="box-none">
         {addBtn}
       </View>
     );
@@ -54,7 +57,7 @@ export default function EmptyBlock({ freeBlock, rowHeight, gridStartMin, onPress
           type="short"
           style={[StyleSheet.absoluteFillObject, s.short, isDark && s.shortDark]}
         />
-        <View style={s.contentRow}>
+        <View style={[s.contentRow, { paddingTop: contentOffset }]}>
           {freeBlock.label ? (
             <AppText style={[s.shortLabel, isDark && s.shortLabelDark]}>{freeBlock.label}</AppText>
           ) : null}
@@ -73,7 +76,7 @@ export default function EmptyBlock({ freeBlock, rowHeight, gridStartMin, onPress
         <BreathingAnimation type="medium" style={StyleSheet.absoluteFillObject}>
           <LinearGradient colors={gradColors} style={StyleSheet.absoluteFillObject} />
         </BreathingAnimation>
-        <View style={s.contentCol}>
+        <View style={[s.contentCol, { paddingTop: contentOffset }]}>
           {freeBlock.label ? (
             <AppText style={[s.mediumLabel, isDark && s.mediumLabelDark]}>{freeBlock.label}</AppText>
           ) : null}
@@ -92,7 +95,7 @@ export default function EmptyBlock({ freeBlock, rowHeight, gridStartMin, onPress
       <BreathingAnimation type="long" style={StyleSheet.absoluteFillObject}>
         <LinearGradient colors={gradColors} style={StyleSheet.absoluteFillObject} />
       </BreathingAnimation>
-      <View style={s.contentCol}>
+      <View style={[s.contentCol, { paddingTop: contentOffset }]}>
         {freeBlock.label ? (
           <AppText style={[s.longLabel, isDark && s.longLabelDark]}>{freeBlock.label}</AppText>
         ) : null}
