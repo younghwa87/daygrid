@@ -6,7 +6,6 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as WebBrowser from 'expo-web-browser';
 import { useFonts } from 'expo-font';
 import { NanumPenScript_400Regular } from '@expo-google-fonts/nanum-pen-script';
-import { NanumBrushScript_400Regular } from '@expo-google-fonts/nanum-brush-script';
 import { DoHyeon_400Regular } from '@expo-google-fonts/do-hyeon';
 import { Gaegu_400Regular, Gaegu_700Bold } from '@expo-google-fonts/gaegu';
 import { GamjaFlower_400Regular } from '@expo-google-fonts/gamja-flower';
@@ -45,10 +44,7 @@ function AppContent() {
 
 export default function App() {
   useFonts({
-    'Pretendard-Regular': require('./assets/fonts/Pretendard-Regular.otf'),
-    'Pretendard-Bold': require('./assets/fonts/Pretendard-Bold.otf'),
     NanumPenScript_400Regular,
-    NanumBrushScript_400Regular,
     DoHyeon_400Regular,
     Gaegu_400Regular,
     Gaegu_700Bold,

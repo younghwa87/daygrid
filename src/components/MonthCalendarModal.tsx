@@ -7,16 +7,12 @@ import {
 } from 'react-native';
 import { AppText } from './AppText';
 import dayjs from 'dayjs';
-import Holidays from 'date-holidays';
+import { isHoliday } from 'korean-holidays';
 import { useAppColors } from '../hooks/useAppColors';
 import { useScheduleStore } from '../store/scheduleStore';
 
-const hd = new Holidays('KR');
-
 function isPublicHoliday(dateStr: string): boolean {
-  const result = hd.isHoliday(new Date(dateStr));
-  if (!result) return false;
-  return (result as any[]).some((h: any) => h.type === 'public');
+  return isHoliday(new Date(dateStr)) !== null;
 }
 
 type Props = {

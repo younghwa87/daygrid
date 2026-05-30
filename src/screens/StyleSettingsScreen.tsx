@@ -72,9 +72,7 @@ const sc = StyleSheet.create({
 // ──────────── 글씨체 드랍다운 ────────────
 const FONT_OPTIONS: { value: FontFamily; label: string; fontFamily?: string }[] = [
   { value: 'system',       label: '시스템 기본' },
-  { value: 'pretendard',   label: 'Pretendard',     fontFamily: 'Pretendard-Regular' },
   { value: 'nanum-pen',    label: '나눔손글씨 펜',  fontFamily: 'NanumPenScript_400Regular' },
-  { value: 'nanum-brush',  label: '나눔손글씨 붓',  fontFamily: 'NanumBrushScript_400Regular' },
   { value: 'do-hyeon',     label: '도현',           fontFamily: 'DoHyeon_400Regular' },
   { value: 'gaegu',        label: '개구',           fontFamily: 'Gaegu_400Regular' },
   { value: 'gamja-flower', label: '감자꽃',         fontFamily: 'GamjaFlower_400Regular' },

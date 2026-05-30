@@ -62,7 +62,7 @@ export function TodayWidget({ schedules, dateLabel }: Props) {
           marginBottom: 10,
         }}
       >
-        <FlexWidget style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <FlexWidget style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
           <TextWidget
             text="Datile"
             style={{ fontSize: 16, color: '#4A90D9', fontWeight: 'bold' }}

@@ -9,7 +9,7 @@ import {
 import { AppText } from '../components/AppText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import dayjs from 'dayjs';
-import Holidays from 'date-holidays';
+import { isHoliday } from 'korean-holidays';
 import { useScheduleStore } from '../store/scheduleStore';
 import { useAppColors } from '../hooks/useAppColors';
 import { Schedule } from '../types';
@@ -22,13 +22,9 @@ import {
   DensityResult,
 } from '../utils/densityCalculator';
 
-const hd = new Holidays('KR');
-
 function getHolidayName(dateStr: string): string | null {
-  const result = hd.isHoliday(new Date(dateStr));
-  if (!result) return null;
-  const pub = (result as any[]).find((h: any) => h.type === 'public');
-  return pub ? pub.name : null;
+  const result = isHoliday(new Date(dateStr));
+  return result ? result.nameKo : null;
 }
 
 type Props = {
