@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   View,
+  Text,
   StyleSheet,
   Modal,
   TouchableOpacity,
@@ -68,20 +69,24 @@ const sc = StyleSheet.create({
   text: { fontSize: 12, fontWeight: '500' },
 });
 
-// ──────────── 폰트 드랍다운 ────────────
-const FONT_OPTIONS: { value: FontFamily; label: string }[] = [
-  { value: 'system',      label: '시스템 기본' },
-  { value: 'pretendard',  label: 'Pretendard' },
-  { value: 'nanum-pen',   label: '나눔손글씨 펜' },
-  { value: 'nanum-brush', label: '나눔손글씨 붓' },
-  { value: 'do-hyeon',    label: '도현' },
-  { value: 'gaegu',       label: '개구' },
+// ──────────── 글씨체 드랍다운 ────────────
+const FONT_OPTIONS: { value: FontFamily; label: string; fontFamily?: string }[] = [
+  { value: 'system',       label: '시스템 기본' },
+  { value: 'pretendard',   label: 'Pretendard',     fontFamily: 'Pretendard-Regular' },
+  { value: 'nanum-pen',    label: '나눔손글씨 펜',  fontFamily: 'NanumPenScript_400Regular' },
+  { value: 'nanum-brush',  label: '나눔손글씨 붓',  fontFamily: 'NanumBrushScript_400Regular' },
+  { value: 'do-hyeon',     label: '도현',           fontFamily: 'DoHyeon_400Regular' },
+  { value: 'gaegu',        label: '개구',           fontFamily: 'Gaegu_400Regular' },
+  { value: 'gamja-flower', label: '감자꽃',         fontFamily: 'GamjaFlower_400Regular' },
+  { value: 'hi-melody',    label: '하이멜로디',     fontFamily: 'HiMelody_400Regular' },
+  { value: 'song-myung',   label: '송명',           fontFamily: 'SongMyung_400Regular' },
+  { value: 'poor-story',   label: '가난한이야기',   fontFamily: 'PoorStory_400Regular' },
 ];
 
 function FontDropdown({ value, onChange }: { value: FontFamily; onChange: (v: FontFamily) => void }) {
   const { colors } = useAppColors();
   const [open, setOpen] = useState(false);
-  const selectedLabel = FONT_OPTIONS.find((o) => o.value === value)?.label ?? value;
+  const selected = FONT_OPTIONS.find((o) => o.value === value) ?? FONT_OPTIONS[0];
 
   return (
     <View>
@@ -89,20 +94,29 @@ function FontDropdown({ value, onChange }: { value: FontFamily; onChange: (v: Fo
         style={[fd.trigger, { borderColor: colors.border, backgroundColor: colors.background }]}
         onPress={() => setOpen((v) => !v)}
       >
-        <AppText style={[fd.triggerText, { color: colors.text }]}>{selectedLabel}</AppText>
+        <Text
+          style={[fd.triggerText, { color: colors.text, fontFamily: selected.fontFamily }]}
+          numberOfLines={1}
+        >
+          {selected.label}
+        </Text>
         <AppText style={[fd.arrow, { color: colors.textSecondary }]}>{open ? '▲' : '▼'}</AppText>
       </TouchableOpacity>
       {open && (
         <View style={[fd.list, { borderColor: colors.border, backgroundColor: colors.surface }]}>
-          {FONT_OPTIONS.map((opt) => (
+          {FONT_OPTIONS.map((opt, i) => (
             <TouchableOpacity
               key={opt.value}
-              style={[fd.option, { borderBottomColor: colors.border }]}
+              style={[
+                fd.option,
+                i < FONT_OPTIONS.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
+                opt.value === value && { backgroundColor: '#4A90D911' },
+              ]}
               onPress={() => { onChange(opt.value); setOpen(false); }}
             >
-              <AppText style={[fd.optionText, { color: opt.value === value ? '#4A90D9' : colors.text }]}>
+              <Text style={[fd.optionText, { color: opt.value === value ? '#4A90D9' : colors.text, fontFamily: opt.fontFamily }]}>
                 {opt.label}
-              </AppText>
+              </Text>
               {opt.value === value && (
                 <AppText style={fd.check}>✓</AppText>
               )}
@@ -122,33 +136,32 @@ const fd = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     gap: 6,
-    minWidth: 140,
+    minWidth: 150,
   },
-  triggerText: { flex: 1, fontSize: 13 },
+  triggerText: { flex: 1, fontSize: 15 },
   arrow: { fontSize: 10 },
   list: {
     position: 'absolute',
     right: 0,
-    top: 36,
-    minWidth: 160,
+    top: 38,
+    minWidth: 180,
     borderWidth: 1,
     borderRadius: 10,
     zIndex: 999,
     shadowColor: '#000',
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.14,
     shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 8,
-    elevation: 8,
+    shadowRadius: 10,
+    elevation: 10,
     overflow: 'hidden',
   },
   option: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 14,
-    paddingVertical: 11,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingVertical: 12,
   },
-  optionText: { flex: 1, fontSize: 14 },
+  optionText: { flex: 1, fontSize: 16 },
   check: { fontSize: 14, color: '#4A90D9', fontWeight: '600' },
 });
 
@@ -406,7 +419,7 @@ export default function StyleSettingsScreen({ visible, onClose }: Props) {
             <SettingRow label="시간 표기">
               <SegCtrl<TimeFormat> options={['12h','24h']} value={timeFormat} onChange={setTimeFormat} labelMap={{ '12h':'12시간', '24h':'24시간' }} />
             </SettingRow>
-            <SettingRow label="폰트" last zIndex={10}>
+            <SettingRow label="글씨체" last zIndex={10}>
               <FontDropdown value={fontFamily} onChange={setFontFamily} />
             </SettingRow>
           </View>

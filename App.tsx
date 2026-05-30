@@ -9,6 +9,10 @@ import { NanumPenScript_400Regular } from '@expo-google-fonts/nanum-pen-script';
 import { NanumBrushScript_400Regular } from '@expo-google-fonts/nanum-brush-script';
 import { DoHyeon_400Regular } from '@expo-google-fonts/do-hyeon';
 import { Gaegu_400Regular, Gaegu_700Bold } from '@expo-google-fonts/gaegu';
+import { GamjaFlower_400Regular } from '@expo-google-fonts/gamja-flower';
+import { HiMelody_400Regular } from '@expo-google-fonts/hi-melody';
+import { SongMyung_400Regular } from '@expo-google-fonts/song-myung';
+import { PoorStory_400Regular } from '@expo-google-fonts/poor-story';
 
 WebBrowser.maybeCompleteAuthSession();
 import TimeGridScreen from './src/screens/TimeGridScreen';
@@ -48,6 +52,10 @@ export default function App() {
     DoHyeon_400Regular,
     Gaegu_400Regular,
     Gaegu_700Bold,
+    GamjaFlower_400Regular,
+    HiMelody_400Regular,
+    SongMyung_400Regular,
+    PoorStory_400Regular,
   });
 
   useEffect(() => {

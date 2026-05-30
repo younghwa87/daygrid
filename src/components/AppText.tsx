@@ -3,11 +3,15 @@ import { Text, TextProps, StyleSheet } from 'react-native';
 import { useSettingsStore } from '../store/settingsStore';
 
 const FONT_MAP = {
-  pretendard:    { regular: 'Pretendard-Regular',        bold: 'Pretendard-Bold' },
-  'nanum-pen':   { regular: 'NanumPenScript_400Regular', bold: 'NanumPenScript_400Regular' },
-  'nanum-brush': { regular: 'NanumBrushScript_400Regular', bold: 'NanumBrushScript_400Regular' },
-  'do-hyeon':    { regular: 'DoHyeon_400Regular',        bold: 'DoHyeon_400Regular' },
-  gaegu:         { regular: 'Gaegu_400Regular',          bold: 'Gaegu_700Bold' },
+  pretendard:    { regular: 'Pretendard-Regular',           bold: 'Pretendard-Bold' },
+  'nanum-pen':   { regular: 'NanumPenScript_400Regular',    bold: 'NanumPenScript_400Regular' },
+  'nanum-brush': { regular: 'NanumBrushScript_400Regular',  bold: 'NanumBrushScript_400Regular' },
+  'do-hyeon':    { regular: 'DoHyeon_400Regular',           bold: 'DoHyeon_400Regular' },
+  gaegu:         { regular: 'Gaegu_400Regular',             bold: 'Gaegu_700Bold' },
+  'gamja-flower':{ regular: 'GamjaFlower_400Regular',       bold: 'GamjaFlower_400Regular' },
+  'hi-melody':   { regular: 'HiMelody_400Regular',          bold: 'HiMelody_400Regular' },
+  'song-myung':  { regular: 'SongMyung_400Regular',         bold: 'SongMyung_400Regular' },
+  'poor-story':  { regular: 'PoorStory_400Regular',         bold: 'PoorStory_400Regular' },
 } as const;
 
 export function AppText({ style, ...props }: TextProps) {

@@ -11,8 +11,12 @@
   "dependencies": {
     "@expo-google-fonts/do-hyeon": "^0.4.1",
     "@expo-google-fonts/gaegu": "^0.4.1",
+    "@expo-google-fonts/gamja-flower": "^0.4.1",
+    "@expo-google-fonts/hi-melody": "^0.4.1",
     "@expo-google-fonts/nanum-brush-script": "^0.4.1",
     "@expo-google-fonts/nanum-pen-script": "^0.4.0",
+    "@expo-google-fonts/poor-story": "^0.4.1",
+    "@expo-google-fonts/song-myung": "^0.4.1",
     "@react-native-async-storage/async-storage": "^3.1.0",
     "@react-native-google-signin/google-signin": "^16.1.2",
     "babel-preset-expo": "^55.0.22",
