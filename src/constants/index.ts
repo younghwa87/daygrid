@@ -31,8 +31,8 @@ export const COLORS = {
     border: '#E0E0E0',
     text: '#1A1A1A',
     textSecondary: '#757575',
-    hourLine: '#E0E0E0',
-    halfHourLine: '#F0F0F0',
+    hourLine: '#C0C0C0',
+    halfHourLine: '#E0E0E0',
   },
   dark: {
     background: '#1A1A1A',
