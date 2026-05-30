@@ -4,7 +4,8 @@ import { FlexWidget, TextWidget } from 'react-native-android-widget';
 import { WidgetSchedule } from './TodayWidget';
 
 type Props = {
-  current: WidgetSchedule | null;
+  schedule: WidgetSchedule | null;
+  isRunning: boolean;
 };
 
 function formatTime(minutes: number): string {
@@ -13,7 +14,7 @@ function formatTime(minutes: number): string {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
-export function SmallTodayWidget({ current }: Props) {
+export function SmallTodayWidget({ schedule, isRunning }: Props) {
   return (
     <FlexWidget
       clickAction="OPEN_APP"
@@ -25,35 +26,43 @@ export function SmallTodayWidget({ current }: Props) {
         backgroundColor: '#FFFFFF',
         borderRadius: 12,
         paddingHorizontal: 12,
-        paddingVertical: 8,
+        paddingVertical: 6,
       }}
     >
-      {current === null && (
+      {schedule === null && (
         <TextWidget
           text="오늘 일정 없음"
           style={{ fontSize: 12, color: '#CCCCCC' }}
         />
       )}
 
-      {current !== null && (
-        <FlexWidget style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+      {schedule !== null && (
+        <FlexWidget style={{ flexDirection: 'row', alignItems: 'center' }}>
           <FlexWidget
             style={{
               width: 3,
-              height: 20,
+              height: 28,
               borderRadius: 2,
-              backgroundColor: current.color as `#${string}`,
+              backgroundColor: schedule.color as `#${string}`,
               marginRight: 8,
             }}
           />
-          <TextWidget
-            text={current.title}
-            style={{ fontSize: 12, color: '#333333' }}
-          />
-          <TextWidget
-            text={formatTime(current.startTime)}
-            style={{ fontSize: 11, color: '#AAAAAA', marginLeft: 6 }}
-          />
+          <FlexWidget style={{ flexDirection: 'column' }}>
+            <FlexWidget style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
+              <TextWidget
+                text={schedule.title}
+                style={{ fontSize: 12, color: '#333333', fontWeight: 'bold' }}
+              />
+              <TextWidget
+                text={isRunning ? '  진행 중' : `  ${formatTime(schedule.startTime)} 시작`}
+                style={{ fontSize: 10, color: isRunning ? '#4A90D9' : '#AAAAAA' }}
+              />
+            </FlexWidget>
+            <TextWidget
+              text={`${formatTime(schedule.startTime)} - ${formatTime(schedule.endTime)}`}
+              style={{ fontSize: 10, color: '#AAAAAA' }}
+            />
+          </FlexWidget>
         </FlexWidget>
       )}
     </FlexWidget>

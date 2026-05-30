@@ -9,10 +9,10 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
   const dateLabel = dayjs().format('M/D (ddd)');
   const schedules = getTodaySchedules();
   const now = dayjs().hour() * 60 + dayjs().minute();
-  const current =
-    schedules.find((s) => s.startTime <= now && now < s.endTime) ??
-    schedules.find((s) => s.startTime >= now) ??
-    null;
+  const running = schedules.find((s) => s.startTime <= now && now < s.endTime) ?? null;
+  const next = schedules.find((s) => s.startTime >= now) ?? null;
+  const schedule = running ?? next ?? null;
+  const isRunning = running !== null;
 
   switch (props.widgetAction) {
     case 'WIDGET_ADDED':
@@ -20,7 +20,7 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps) {
     case 'WIDGET_RESIZED': {
       if (props.widgetInfo.widgetName === 'TodaySmall') {
         props.renderWidget(
-          React.createElement(SmallTodayWidget, { current })
+          React.createElement(SmallTodayWidget, { schedule, isRunning })
         );
       } else {
         props.renderWidget(

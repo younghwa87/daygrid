@@ -48,10 +48,10 @@ export function updateTodayWidget(): void {
   const schedules = getTodaySchedules();
   const dateLabel = dayjs().format('M/D (ddd)');
   const now = dayjs().hour() * 60 + dayjs().minute();
-  const current =
-    schedules.find((s) => s.startTime <= now && now < s.endTime) ??
-    schedules.find((s) => s.startTime >= now) ??
-    null;
+  const running = schedules.find((s) => s.startTime <= now && now < s.endTime) ?? null;
+  const next = schedules.find((s) => s.startTime >= now) ?? null;
+  const schedule = running ?? next ?? null;
+  const isRunning = running !== null;
 
   requestWidgetUpdate({
     widgetName: 'Today',
@@ -60,7 +60,7 @@ export function updateTodayWidget(): void {
   });
   requestWidgetUpdate({
     widgetName: 'TodaySmall',
-    renderWidget: () => React.createElement(SmallTodayWidget, { current }),
+    renderWidget: () => React.createElement(SmallTodayWidget, { schedule, isRunning }),
     widgetNotFound: () => {},
   });
 }
