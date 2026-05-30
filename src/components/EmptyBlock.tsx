@@ -1,10 +1,10 @@
 import React from 'react';
 import {
   View,
-  Text,
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
+import { AppText } from './AppText';
 import { LinearGradient } from 'expo-linear-gradient';
 import BreathingAnimation from './animations/BreathingAnimation';
 import { useAppColors } from '../hooks/useAppColors';
@@ -32,7 +32,7 @@ export default function EmptyBlock({ freeBlock, rowHeight, gridStartMin, onPress
       onPress={() => onPressAdd(freeBlock.startMin, freeBlock.endMin)}
       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
     >
-      <Text style={[s.addBtnText, isDark && s.addBtnTextDark]}>＋</Text>
+      <AppText style={[s.addBtnText, isDark && s.addBtnTextDark]}>＋</AppText>
     </TouchableOpacity>
   ) : null;
 
@@ -56,7 +56,7 @@ export default function EmptyBlock({ freeBlock, rowHeight, gridStartMin, onPress
         />
         <View style={s.contentRow}>
           {freeBlock.label ? (
-            <Text style={[s.shortLabel, isDark && s.shortLabelDark]}>{freeBlock.label}</Text>
+            <AppText style={[s.shortLabel, isDark && s.shortLabelDark]}>{freeBlock.label}</AppText>
           ) : null}
           {addBtn}
         </View>
@@ -75,9 +75,9 @@ export default function EmptyBlock({ freeBlock, rowHeight, gridStartMin, onPress
         </BreathingAnimation>
         <View style={s.contentCol}>
           {freeBlock.label ? (
-            <Text style={[s.mediumLabel, isDark && s.mediumLabelDark]}>{freeBlock.label}</Text>
+            <AppText style={[s.mediumLabel, isDark && s.mediumLabelDark]}>{freeBlock.label}</AppText>
           ) : null}
-          <Text style={[s.mediumSub, isDark && s.mediumSubDark]}>집중하기 좋은 시간이에요</Text>
+          <AppText style={[s.mediumSub, isDark && s.mediumSubDark]}>집중하기 좋은 시간이에요</AppText>
         </View>
         {addBtn}
       </View>
@@ -94,9 +94,9 @@ export default function EmptyBlock({ freeBlock, rowHeight, gridStartMin, onPress
       </BreathingAnimation>
       <View style={s.contentCol}>
         {freeBlock.label ? (
-          <Text style={[s.longLabel, isDark && s.longLabelDark]}>{freeBlock.label}</Text>
+          <AppText style={[s.longLabel, isDark && s.longLabelDark]}>{freeBlock.label}</AppText>
         ) : null}
-        <Text style={[s.longSub, isDark && s.longSubDark]}>오늘의 선물 같은 시간</Text>
+        <AppText style={[s.longSub, isDark && s.longSubDark]}>오늘의 선물 같은 시간</AppText>
       </View>
       {addBtn}
     </View>

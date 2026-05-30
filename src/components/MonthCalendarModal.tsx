@@ -2,10 +2,10 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   Modal,
   View,
-  Text,
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
+import { AppText } from './AppText';
 import dayjs from 'dayjs';
 import Holidays from 'date-holidays';
 import { useAppColors } from '../hooks/useAppColors';
@@ -68,20 +68,20 @@ export default function MonthCalendarModal({ visible, selectedDate, onSelectDate
         {/* 월 네비게이션 */}
         <View style={s.monthNav}>
           <TouchableOpacity onPress={() => setViewMonth((v) => v.subtract(1, 'month'))} style={s.navBtn}>
-            <Text style={[s.navArrow, { color: colors.text }]}>‹</Text>
+            <AppText style={[s.navArrow, { color: colors.text }]}>‹</AppText>
           </TouchableOpacity>
-          <Text style={[s.monthTitle, { color: colors.text }]}>
+          <AppText style={[s.monthTitle, { color: colors.text }]}>
             {viewMonth.format('YYYY년 M월')}
-          </Text>
+          </AppText>
           <TouchableOpacity onPress={() => setViewMonth((v) => v.add(1, 'month'))} style={s.navBtn}>
-            <Text style={[s.navArrow, { color: colors.text }]}>›</Text>
+            <AppText style={[s.navArrow, { color: colors.text }]}>›</AppText>
           </TouchableOpacity>
         </View>
 
         {/* 요일 헤더 */}
         <View style={s.weekRow}>
           {WEEKDAYS.map((day, i) => (
-            <Text
+            <AppText
               key={day}
               style={[
                 s.weekDayText,
@@ -89,7 +89,7 @@ export default function MonthCalendarModal({ visible, selectedDate, onSelectDate
               ]}
             >
               {day}
-            </Text>
+            </AppText>
           ))}
         </View>
 
@@ -125,9 +125,9 @@ export default function MonthCalendarModal({ visible, selectedDate, onSelectDate
                     isToday && !isSelected && { borderWidth: 1.5, borderColor: '#4A90D9' },
                   ]}
                 >
-                  <Text style={[s.dayText, { color: textColor }]}>
+                  <AppText style={[s.dayText, { color: textColor }]}>
                     {dayjs(date).date()}
-                  </Text>
+                  </AppText>
                 </View>
                 {hasSchedule && (
                   <View style={[s.dot, { backgroundColor: isSelected ? '#fff' : '#4A90D9' }]} />

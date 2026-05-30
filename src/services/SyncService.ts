@@ -11,6 +11,7 @@ export type BackupSettings = {
   gridStartHour: number;
   gridEndHour: number;
   darkMode: boolean;
+  fontFamily?: string;
 };
 
 export type BackupData = {

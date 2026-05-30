@@ -1,12 +1,12 @@
 import React, { useMemo } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   Modal,
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
+import { AppText } from '../components/AppText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import dayjs from 'dayjs';
 import Holidays from 'date-holidays';
@@ -153,9 +153,9 @@ export default function WeeklyHeatmapScreen({ visible, onClose, onDayPress }: Pr
         {/* 헤더 */}
         <View style={[styles.header, { borderBottomColor: colors.border }]}>
           <TouchableOpacity onPress={onClose} style={styles.sideBtn}>
-            <Text style={styles.closeTxt}>‹</Text>
+            <AppText style={styles.closeTxt}>‹</AppText>
           </TouchableOpacity>
-          <Text style={[styles.weekLabel, { color: colors.text }]}>{weekLabel}</Text>
+          <AppText style={[styles.weekLabel, { color: colors.text }]}>{weekLabel}</AppText>
           <View style={styles.sideBtn} />
         </View>
 
@@ -178,23 +178,23 @@ export default function WeeklyHeatmapScreen({ visible, onClose, onDayPress }: Pr
                   style={styles.dayHeaderCell}
                   onPress={() => onDayPress(dateStr)}
                 >
-                  <Text style={[styles.dayName, { color: dayColor }]}>{DAY_LABELS[i]}</Text>
+                  <AppText style={[styles.dayName, { color: dayColor }]}>{DAY_LABELS[i]}</AppText>
                   <View style={[styles.dayCircle, isToday && styles.todayCircle]}>
-                    <Text style={[styles.dayDate, { color: isToday ? '#fff' : (i === 6 || isHoliday) ? '#E05555' : colors.text }]}>
+                    <AppText style={[styles.dayDate, { color: isToday ? '#fff' : (i === 6 || isHoliday) ? '#E05555' : colors.text }]}>
                       {d.date()}
-                    </Text>
+                    </AppText>
                   </View>
                   {holidayName && (
-                    <Text style={styles.holidayName} numberOfLines={1}>{holidayName}</Text>
+                    <AppText style={styles.holidayName} numberOfLines={1}>{holidayName}</AppText>
                   )}
                   {/* 일별 밀도 뱃지 */}
                   <View style={[
                     styles.densityBadge,
                     { backgroundColor: isDark ? density.darkColor : density.color },
                   ]}>
-                    <Text style={[styles.densityBadgeText, { color: isDark ? '#fff' : density.textColor }]}>
+                    <AppText style={[styles.densityBadgeText, { color: isDark ? '#fff' : density.textColor }]}>
                       {density.label}
-                    </Text>
+                    </AppText>
                   </View>
                 </TouchableOpacity>
               );
@@ -206,9 +206,9 @@ export default function WeeklyHeatmapScreen({ visible, onClose, onDayPress }: Pr
             {HOURS.map(hour => (
               <View key={hour} style={styles.gridRow}>
                 <View style={[styles.timeCell, { width: TIME_W, borderRightColor: colors.border }]}>
-                  <Text style={[styles.timeLabel, { color: colors.textSecondary }]}>
+                  <AppText style={[styles.timeLabel, { color: colors.textSecondary }]}>
                     {String(hour).padStart(2, '0')}
-                  </Text>
+                  </AppText>
                 </View>
                 {weekDays.map((d, di) => (
                   <HeatmapCell
@@ -233,46 +233,46 @@ export default function WeeklyHeatmapScreen({ visible, onClose, onDayPress }: Pr
                     i === 0 && { borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
                   ]}
                 />
-                <Text style={[styles.legendLabel, { color: colors.textSecondary }]}>{lbl}</Text>
+                <AppText style={[styles.legendLabel, { color: colors.textSecondary }]}>{lbl}</AppText>
               </View>
             ))}
           </View>
 
           {/* 주간 밀도 분석 카드 */}
           <View style={[styles.summaryCard, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.summaryTitle, { color: colors.text }]}>주간 밀도 분석</Text>
+            <AppText style={[styles.summaryTitle, { color: colors.text }]}>주간 밀도 분석</AppText>
 
             {/* 주간 인사이트 */}
             <View style={[styles.insightRow, { backgroundColor: isDark ? summary.busiestDensity.darkColor + '44' : summary.busiestDensity.color + '66' }]}>
-              <Text style={[styles.insightText, { color: colors.text }]}>{summary.weekInsight}</Text>
+              <AppText style={[styles.insightText, { color: colors.text }]}>{summary.weekInsight}</AppText>
             </View>
 
             {/* 수치 요약 */}
             <View style={styles.statsGrid}>
               <View style={styles.statItem}>
-                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>총 일정 시간</Text>
-                <Text style={[styles.statValue, { color: colors.text }]}>
+                <AppText style={[styles.statLabel, { color: colors.textSecondary }]}>총 일정 시간</AppText>
+                <AppText style={[styles.statValue, { color: colors.text }]}>
                   {summary.totalH}시간 {summary.totalM}분
-                </Text>
+                </AppText>
               </View>
               <View style={styles.statItem}>
-                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>여백 시간</Text>
-                <Text style={[styles.statValue, { color: colors.text }]}>
+                <AppText style={[styles.statLabel, { color: colors.textSecondary }]}>여백 시간</AppText>
+                <AppText style={[styles.statValue, { color: colors.text }]}>
                   {summary.freeH}시간 {summary.freeM}분
-                </Text>
+                </AppText>
               </View>
               <View style={styles.statItem}>
-                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>가장 바쁜 날</Text>
-                <Text style={[styles.statValue, { color: colors.text }]}>{summary.busiestDay} 🔥</Text>
+                <AppText style={[styles.statLabel, { color: colors.textSecondary }]}>가장 바쁜 날</AppText>
+                <AppText style={[styles.statValue, { color: colors.text }]}>{summary.busiestDay} 🔥</AppText>
               </View>
               <View style={styles.statItem}>
-                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>가장 여유로운 날</Text>
-                <Text style={[styles.statValue, { color: colors.text }]}>{summary.freestDay} ✦</Text>
+                <AppText style={[styles.statLabel, { color: colors.textSecondary }]}>가장 여유로운 날</AppText>
+                <AppText style={[styles.statValue, { color: colors.text }]}>{summary.freestDay} ✦</AppText>
               </View>
             </View>
 
             {/* 요일별 밀도 바 */}
-            <Text style={[styles.barTitle, { color: colors.textSecondary }]}>요일별 밀도</Text>
+            <AppText style={[styles.barTitle, { color: colors.textSecondary }]}>요일별 밀도</AppText>
             <View style={styles.densityBars}>
               {dayDensities.map((d, i) => (
                 <View key={i} style={styles.barCol}>
@@ -287,9 +287,9 @@ export default function WeeklyHeatmapScreen({ visible, onClose, onDayPress }: Pr
                       ]}
                     />
                   </View>
-                  <Text style={[styles.barDayLabel, { color: colors.textSecondary }]}>
+                  <AppText style={[styles.barDayLabel, { color: colors.textSecondary }]}>
                     {DAY_LABELS[i]}
-                  </Text>
+                  </AppText>
                 </View>
               ))}
             </View>

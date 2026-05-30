@@ -4,6 +4,11 @@ import { StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as WebBrowser from 'expo-web-browser';
+import { useFonts } from 'expo-font';
+import {
+  NotoSansKR_400Regular,
+  NotoSansKR_700Bold,
+} from '@expo-google-fonts/noto-sans-kr';
 
 WebBrowser.maybeCompleteAuthSession();
 import TimeGridScreen from './src/screens/TimeGridScreen';
@@ -35,6 +40,13 @@ function AppContent() {
 }
 
 export default function App() {
+  useFonts({
+    'Pretendard-Regular': require('./assets/fonts/Pretendard-Regular.otf'),
+    'Pretendard-Bold': require('./assets/fonts/Pretendard-Bold.otf'),
+    NotoSansKR_400Regular,
+    NotoSansKR_700Bold,
+  });
+
   useEffect(() => {
     notificationService.initialize();
   }, []);

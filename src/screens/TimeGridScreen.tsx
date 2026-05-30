@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
   Alert,
 } from 'react-native';
+import { AppText } from '../components/AppText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ko';
@@ -33,7 +33,7 @@ const ClockText = React.memo(function ClockText({ style }: { style: object }) {
     const t = setInterval(() => setNow(dayjs().format('HH:mm:ss')), 1000);
     return () => clearInterval(t);
   }, []);
-  return <Text style={style}>{now}</Text>;
+  return <AppText style={style}>{now}</AppText>;
 });
 
 type ModalState =
@@ -262,35 +262,35 @@ export default function TimeGridScreen() {
           onPress={() => setSelectedDate(dayjs(selectedDate).subtract(1, 'day').format('YYYY-MM-DD'))}
           style={styles.navBtn}
         >
-          <Text style={[styles.navArrow, { color: colors.text }]}>‹</Text>
+          <AppText style={[styles.navArrow, { color: colors.text }]}>‹</AppText>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => setCalendarVisible(true)}
           style={styles.dateLabelBtn}
         >
-          <Text style={[styles.dateMain, { color: colors.text }]}>
+          <AppText style={[styles.dateMain, { color: colors.text }]}>
             {dateLabel}
             {isToday && (
-              <Text style={[styles.dateSub, { color: colors.textSecondary }]}>{'  '}Today</Text>
+              <AppText style={[styles.dateSub, { color: colors.textSecondary }]}>{'  '}Today</AppText>
             )}
-          </Text>
+          </AppText>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => setSelectedDate(dayjs(selectedDate).add(1, 'day').format('YYYY-MM-DD'))}
           style={styles.navBtn}
         >
-          <Text style={[styles.navArrow, { color: colors.text }]}>›</Text>
+          <AppText style={[styles.navArrow, { color: colors.text }]}>›</AppText>
         </TouchableOpacity>
         {!isToday && (
           <TouchableOpacity
             onPress={() => setSelectedDate(dayjs().format('YYYY-MM-DD'))}
             style={styles.todayBtn}
           >
-            <Text style={styles.todayBtnText}>오늘</Text>
+            <AppText style={styles.todayBtnText}>오늘</AppText>
           </TouchableOpacity>
         )}
         <TouchableOpacity onPress={() => setSettingsVisible(true)} style={styles.menuButton}>
-          <Text style={[styles.menuDots, { color: colors.textSecondary }]}>•••</Text>
+          <AppText style={[styles.menuDots, { color: colors.textSecondary }]}>•••</AppText>
         </TouchableOpacity>
       </View>
 
@@ -311,9 +311,9 @@ export default function TimeGridScreen() {
       {/* 여백 요약 바 */}
       <View style={[styles.summaryBar, { borderTopColor: colors.border, backgroundColor: colors.background }]}>
         <View style={styles.summaryRow}>
-          <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>
+          <AppText style={[styles.summaryLabel, { color: colors.textSecondary }]}>
             여백 {formatHoursKo(freeSummary.totalFreeHours)}
-          </Text>
+          </AppText>
           <View style={styles.progressTrack}>
             <View
               style={[
@@ -325,22 +325,22 @@ export default function TimeGridScreen() {
               ]}
             />
           </View>
-          <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>
+          <AppText style={[styles.summaryLabel, { color: colors.textSecondary }]}>
             최장 {freeSummary.longestFreeBlock
               ? formatHoursKo(freeSummary.longestFreeBlock.durationHours)
               : '없음'}
-          </Text>
+          </AppText>
         </View>
-        <Text style={[styles.summaryMessage, { color: summaryBarColor() }]}>
+        <AppText style={[styles.summaryMessage, { color: summaryBarColor() }]}>
           {freeSummary.message}
-        </Text>
+        </AppText>
       </View>
 
       {/* 하단 바 */}
       <View style={[styles.bottomBar, { borderTopColor: colors.border, backgroundColor: colors.background }]}>
         <ClockText style={[styles.clockText, { color: colors.textSecondary }]} />
         <TouchableOpacity style={styles.calButton} onPress={() => setHeatmapVisible(true)}>
-          <Text style={{ fontSize: 18 }}>🗓️</Text>
+          <AppText style={{ fontSize: 18 }}>🗓️</AppText>
         </TouchableOpacity>
       </View>
 

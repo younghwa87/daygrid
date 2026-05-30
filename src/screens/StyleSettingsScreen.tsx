@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   Modal,
   TouchableOpacity,
@@ -12,6 +11,7 @@ import {
   KeyboardAvoidingView,
   ActivityIndicator,
 } from 'react-native';
+import { AppText } from '../components/AppText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import { GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
@@ -24,6 +24,7 @@ import {
   TimeFormat,
   TextSize,
   TextPosition,
+  FontFamily,
   ROW_HEIGHTS,
 } from '../store/settingsStore';
 import { useAppColors } from '../hooks/useAppColors';
@@ -52,9 +53,9 @@ function SegCtrl<T extends string>({
           onPress={() => onChange(opt)}
           style={[sc.item, value === opt && sc.active]}
         >
-          <Text style={[sc.text, { color: value === opt ? '#fff' : colors.textSecondary }]}>
+          <AppText style={[sc.text, { color: value === opt ? '#fff' : colors.textSecondary }]}>
             {labelMap[opt]}
-          </Text>
+          </AppText>
         </TouchableOpacity>
       ))}
     </View>
@@ -72,7 +73,7 @@ function SettingRow({ label, children, last = false }: { label: string; children
   const { colors } = useAppColors();
   return (
     <View style={[row.wrap, !last && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }]}>
-      <Text style={[row.label, { color: colors.text }]}>{label}</Text>
+      <AppText style={[row.label, { color: colors.text }]}>{label}</AppText>
       {children}
     </View>
   );
@@ -99,7 +100,7 @@ function CategoryEditModal({
         {/* 반투명 배경: flex:1로 박스 위 공간을 채우며 탭 시 닫힘 */}
         <TouchableOpacity style={catEdit.backdrop} activeOpacity={1} onPress={onClose} />
         <View style={[catEdit.box, { backgroundColor: colors.surface }]}>
-          <Text style={[catEdit.title, { color: colors.text }]}>카테고리 편집</Text>
+          <AppText style={[catEdit.title, { color: colors.text }]}>카테고리 편집</AppText>
 
           <TextInput
             style={[catEdit.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}
@@ -123,14 +124,14 @@ function CategoryEditModal({
 
           <View style={catEdit.buttons}>
             <TouchableOpacity style={[catEdit.btn, { borderColor: colors.border }]} onPress={onClose}>
-              <Text style={{ color: colors.textSecondary, fontWeight: '600' }}>취소</Text>
+              <AppText style={{ color: colors.textSecondary, fontWeight: '600' }}>취소</AppText>
             </TouchableOpacity>
             <TouchableOpacity
               style={[catEdit.btn, catEdit.saveBtn, { opacity: label.trim() ? 1 : 0.4 }]}
               onPress={() => { if (label.trim()) onSave({ ...category, label: label.trim(), color }); }}
               disabled={!label.trim()}
             >
-              <Text style={{ color: '#fff', fontWeight: '600' }}>저장</Text>
+              <AppText style={{ color: '#fff', fontWeight: '600' }}>저장</AppText>
             </TouchableOpacity>
           </View>
         </View>
@@ -161,15 +162,15 @@ function GridPreview() {
     <View style={[prev.wrap, { backgroundColor: colors.background }]}>
       {[0, 1, 2].map((i) => (
         <View key={i} style={[prev.row, { height: rowH, borderTopColor: colors.hourLine }]}>
-          <Text style={[prev.label, { color: colors.textSecondary }]}>{labels[i]}</Text>
+          <AppText style={[prev.label, { color: colors.textSecondary }]}>{labels[i]}</AppText>
           <View style={{ flex: 1 }} />
         </View>
       ))}
       <View style={[prev.block, { top: rowH * 0.2, height: rowH * 0.7, backgroundColor: '#4A90D9CC', borderLeftColor: '#4A90D9', right: 0, left: 48 }]}>
-        <Text style={[prev.blockText, { fontSize, textAlign: textPosition }]} numberOfLines={1}>Preview</Text>
+        <AppText style={[prev.blockText, { fontSize, textAlign: textPosition }]} numberOfLines={1}>Preview</AppText>
       </View>
       <View style={[prev.block, { top: rowH, height: rowH * 1.2, backgroundColor: '#4CAF50CC', borderLeftColor: '#4CAF50', right: 48, left: 48 }]}>
-        <Text style={[prev.blockText, { fontSize, textAlign: textPosition }]} numberOfLines={1}>Example</Text>
+        <AppText style={[prev.blockText, { fontSize, textAlign: textPosition }]} numberOfLines={1}>Example</AppText>
       </View>
     </View>
   );
@@ -189,6 +190,7 @@ export default function StyleSettingsScreen({ visible, onClose }: Props) {
   const {
     blockSize, timeFormat, textSize, textPosition,
     darkMode, setDarkMode,
+    fontFamily, setFontFamily,
     setBlockSize, setTimeFormat, setTextSize, setTextPosition,
     restoreFromCloud: restoreSettings,
   } = useSettingsStore();
@@ -246,10 +248,10 @@ export default function StyleSettingsScreen({ visible, onClose }: Props) {
     setSyncing(true);
     try {
       const { schedules: sc, colorCategories: cc } = useScheduleStore.getState();
-      const { blockSize: bs, timeFormat: tf, textSize: ts, textPosition: tp, gridStartHour, gridEndHour, darkMode: dm } =
+      const { blockSize: bs, timeFormat: tf, textSize: ts, textPosition: tp, gridStartHour, gridEndHour, darkMode: dm, fontFamily: ff } =
         useSettingsStore.getState();
       const settings: BackupSettings = {
-        blockSize: bs, timeFormat: tf, textSize: ts, textPosition: tp, gridStartHour, gridEndHour, darkMode: dm,
+        blockSize: bs, timeFormat: tf, textSize: ts, textPosition: tp, gridStartHour, gridEndHour, darkMode: dm, fontFamily: ff,
       };
       await pushBackup(user.uid, { schedules: sc, colorCategories: cc, settings, updatedAt: Date.now() });
       setLastSyncAt(Date.now());
@@ -289,9 +291,9 @@ export default function StyleSettingsScreen({ visible, onClose }: Props) {
       <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top, paddingBottom: insets.bottom }]}>
         <View style={[styles.header, { borderBottomColor: colors.border }]}>
           <TouchableOpacity onPress={onClose} style={styles.backBtn}>
-            <Text style={[styles.backText, { color: '#4A90D9' }]}>‹</Text>
+            <AppText style={[styles.backText, { color: '#4A90D9' }]}>‹</AppText>
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>다이어리 스타일</Text>
+          <AppText style={[styles.headerTitle, { color: colors.text }]}>다이어리 스타일</AppText>
           <View style={styles.backBtn} />
         </View>
 
@@ -317,49 +319,52 @@ export default function StyleSettingsScreen({ visible, onClose }: Props) {
             <SettingRow label="텍스트 위치">
               <SegCtrl<TextPosition> options={['left','center','right']} value={textPosition} onChange={setTextPosition} labelMap={{ left:'왼쪽', center:'가운데', right:'오른쪽' }} />
             </SettingRow>
-            <SettingRow label="시간 표기" last>
+            <SettingRow label="시간 표기">
               <SegCtrl<TimeFormat> options={['12h','24h']} value={timeFormat} onChange={setTimeFormat} labelMap={{ '12h':'12시간', '24h':'24시간' }} />
+            </SettingRow>
+            <SettingRow label="폰트" last>
+              <SegCtrl<FontFamily> options={['system','pretendard','noto-sans-kr']} value={fontFamily} onChange={setFontFamily} labelMap={{ system:'기본', pretendard:'Pretendard', 'noto-sans-kr':'Noto Sans' }} />
             </SettingRow>
           </View>
 
           {/* 계정 / 백업 */}
           <View style={[styles.section, { backgroundColor: colors.surface }]}>
             <View style={styles.catHeader}>
-              <Text style={[styles.catHeaderText, { color: colors.text }]}>계정 / 백업</Text>
+              <AppText style={[styles.catHeaderText, { color: colors.text }]}>계정 / 백업</AppText>
               {syncing && <ActivityIndicator size="small" color="#4A90D9" />}
             </View>
             {user ? (
               <View style={acc.loggedIn}>
-                <Text style={[acc.email, { color: colors.text }]}>{user.email}</Text>
-                <Text style={[acc.syncLabel, { color: colors.textSecondary }]}>{syncLabel}</Text>
+                <AppText style={[acc.email, { color: colors.text }]}>{user.email}</AppText>
+                <AppText style={[acc.syncLabel, { color: colors.textSecondary }]}>{syncLabel}</AppText>
                 <View style={acc.btnRow}>
                   <TouchableOpacity
                     style={[acc.btn, { borderColor: colors.border }]}
                     onPress={handleManualSync}
                     disabled={syncing}
                   >
-                    <Text style={[acc.btnText, { color: '#4A90D9' }]}>지금 동기화</Text>
+                    <AppText style={[acc.btnText, { color: '#4A90D9' }]}>지금 동기화</AppText>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[acc.btn, { borderColor: colors.border }]}
                     onPress={handleSignOut}
                     disabled={syncing}
                   >
-                    <Text style={[acc.btnText, { color: '#E05555' }]}>로그아웃</Text>
+                    <AppText style={[acc.btnText, { color: '#E05555' }]}>로그아웃</AppText>
                   </TouchableOpacity>
                 </View>
               </View>
             ) : (
               <View style={acc.loggedOut}>
-                <Text style={[acc.desc, { color: colors.textSecondary }]}>
+                <AppText style={[acc.desc, { color: colors.textSecondary }]}>
                   Google 계정으로 로그인하면 일정이 자동으로 백업됩니다.
-                </Text>
+                </AppText>
                 <TouchableOpacity
                   style={acc.googleBtn}
                   onPress={handleGoogleSignIn}
                   disabled={syncing}
                 >
-                  <Text style={acc.googleBtnText}>Google로 로그인</Text>
+                  <AppText style={acc.googleBtnText}>Google로 로그인</AppText>
                 </TouchableOpacity>
               </View>
             )}
@@ -368,12 +373,12 @@ export default function StyleSettingsScreen({ visible, onClose }: Props) {
           {/* 블록 색상 카테고리 */}
           <View style={[styles.section, { backgroundColor: colors.surface }]}>
             <View style={styles.catHeader}>
-              <Text style={[styles.catHeaderText, { color: colors.text }]}>블록 색상 카테고리</Text>
+              <AppText style={[styles.catHeaderText, { color: colors.text }]}>블록 색상 카테고리</AppText>
               <TouchableOpacity
                 onPress={() => setEditingCat({ id: uuid(), label: '', color: PRESET_COLORS[0] })}
                 style={styles.addBtn}
               >
-                <Text style={styles.addBtnText}>+ 추가</Text>
+                <AppText style={styles.addBtnText}>+ 추가</AppText>
               </TouchableOpacity>
             </View>
             {colorCategories.map((cat, i) => (
@@ -383,10 +388,10 @@ export default function StyleSettingsScreen({ visible, onClose }: Props) {
               >
                 <TouchableOpacity onPress={() => setEditingCat(cat)} style={styles.catInfo}>
                   <View style={[styles.colorDot, { backgroundColor: cat.color }]} />
-                  <Text style={[styles.catLabel, { color: colors.text }]}>{cat.label}</Text>
+                  <AppText style={[styles.catLabel, { color: colors.text }]}>{cat.label}</AppText>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => handleDeleteCategory(cat)} style={styles.deleteBtn}>
-                  <Text style={styles.deleteBtnText}>−</Text>
+                  <AppText style={styles.deleteBtnText}>−</AppText>
                 </TouchableOpacity>
               </View>
             ))}

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, ScrollView, StyleSheet, Text } from 'react-native';
+import { View, ScrollView, StyleSheet } from 'react-native';
+import { AppText } from './AppText';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { LinearGradient } from 'expo-linear-gradient';
 import dayjs from 'dayjs';
@@ -232,9 +233,9 @@ export default React.memo(function TimeGrid({ schedules, selectedDate, onStartCr
         ]}
       >
         {i === 0 && title.length > 0 && (
-          <Text style={[styles.eventTitle, { fontSize, textAlign: textPosition }]} numberOfLines={1}>
+          <AppText style={[styles.eventTitle, { fontSize, textAlign: textPosition }]} numberOfLines={1}>
             {title}
-          </Text>
+          </AppText>
         )}
         {showResizeHandle && i === segs.length - 1 && (
           <View style={styles.resizeHandle} />
@@ -280,15 +281,15 @@ export default React.memo(function TimeGrid({ schedules, selectedDate, onStartCr
             return (
               <View key={hour} style={[styles.labelCell, { height: rowHeight, borderTopColor: colors.hourLine }]}>
                 {timeFormat === '12h' ? (
-                  <Text style={[styles.label12h, { color: labelColor }]}>
+                  <AppText style={[styles.label12h, { color: labelColor }]}>
                     {displayHour === 0 ? 12 : displayHour > 12 ? displayHour - 12 : displayHour}
-                    <Text style={[styles.ampm, { color: labelColor }]}> {displayHour < 12 ? 'AM' : 'PM'}</Text>
-                    {isNextDay ? <Text style={styles.nextDay}>+1</Text> : null}
-                  </Text>
+                    <AppText style={[styles.ampm, { color: labelColor }]}> {displayHour < 12 ? 'AM' : 'PM'}</AppText>
+                    {isNextDay ? <AppText style={styles.nextDay}>+1</AppText> : null}
+                  </AppText>
                 ) : (
-                  <Text style={[styles.label24h, { color: labelColor }]}>
-                    {String(displayHour).padStart(2, '0')}:00{isNextDay ? <Text style={styles.nextDay}>+1</Text> : null}
-                  </Text>
+                  <AppText style={[styles.label24h, { color: labelColor }]}>
+                    {String(displayHour).padStart(2, '0')}:00{isNextDay ? <AppText style={styles.nextDay}>+1</AppText> : null}
+                  </AppText>
                 )}
               </View>
             );

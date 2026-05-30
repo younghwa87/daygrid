@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, StyleSheet, Pressable } from 'react-native';
+import { AppText } from './AppText';
 import { Schedule } from '../types';
 import { CELL_HEIGHT, CELL_MINUTES, GRID_START_MINUTES } from '../constants';
 import { minutesToTimeString } from '../utils/timeUtils';
@@ -38,14 +39,14 @@ export default function ScheduleBlock({
       ]}
       onPress={() => onPress?.(schedule)}
     >
-      <Text style={styles.title} numberOfLines={1}>
+      <AppText style={styles.title} numberOfLines={1}>
         {schedule.title}
-      </Text>
+      </AppText>
       {showTime && (
-        <Text style={styles.time}>
+        <AppText style={styles.time}>
           {minutesToTimeString(schedule.startTime)} –{' '}
           {minutesToTimeString(schedule.endTime)}
-        </Text>
+        </AppText>
       )}
     </Pressable>
   );

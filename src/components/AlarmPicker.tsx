@@ -1,11 +1,11 @@
 import React from 'react';
 import {
   View,
-  Text,
   Switch,
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
+import { AppText } from './AppText';
 import { useAppColors } from '../hooks/useAppColors';
 
 type Props = {
@@ -42,7 +42,7 @@ export default function AlarmPicker({ selectedOffsets, onChange }: Props) {
     <View style={[s.container, { borderColor: colors.border }]}>
       {/* 마스터 토글 */}
       <View style={s.headerRow}>
-        <Text style={[s.label, { color: colors.text }]}>알림</Text>
+        <AppText style={[s.label, { color: colors.text }]}>알림</AppText>
         <Switch
           value={enabled}
           onValueChange={handleMasterToggle}
@@ -67,10 +67,10 @@ export default function AlarmPicker({ selectedOffsets, onChange }: Props) {
                 onPress={() => handleToggleOption(opt.value)}
                 activeOpacity={0.7}
               >
-                <Text style={[s.optionText, { color: selected ? '#4A90D9' : colors.text }]}>
+                <AppText style={[s.optionText, { color: selected ? '#4A90D9' : colors.text }]}>
                   {opt.label}
-                </Text>
-                {selected && <Text style={s.check}>✓</Text>}
+                </AppText>
+                {selected && <AppText style={s.check}>✓</AppText>}
               </TouchableOpacity>
             );
           })}

@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   Modal,
   View,
-  Text,
   TextInput,
   TouchableOpacity,
   ScrollView,
@@ -13,6 +12,7 @@ import {
   Keyboard,
   Dimensions,
 } from 'react-native';
+import { AppText } from './AppText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Schedule, ColorCategory, RepeatType, ScheduleType } from '../types';
 import { useAppColors } from '../hooks/useAppColors';
@@ -119,14 +119,14 @@ function TimeAdjuster({
 
   return (
     <View style={adjStyles.row}>
-      <Text style={[adjStyles.label, { color: colors.textSecondary }]}>{label}</Text>
-      {badge ? <Text style={adjStyles.badge}>{badge}</Text> : null}
+      <AppText style={[adjStyles.label, { color: colors.textSecondary }]}>{label}</AppText>
+      {badge ? <AppText style={adjStyles.badge}>{badge}</AppText> : null}
       <View style={adjStyles.controls}>
         <TouchableOpacity
           onPress={() => onChange(minutes - 10)}
           style={[adjStyles.btn, { borderColor: colors.border }]}
         >
-          <Text style={[adjStyles.btnText, { color: colors.text }]}>−</Text>
+          <AppText style={[adjStyles.btnText, { color: colors.text }]}>−</AppText>
         </TouchableOpacity>
         {editing ? (
           <TextInput
@@ -142,16 +142,16 @@ function TimeAdjuster({
           />
         ) : (
           <TouchableOpacity onPress={startEdit} style={adjStyles.timeTouchable}>
-            <Text style={[adjStyles.time, { color: colors.text }]}>
+            <AppText style={[adjStyles.time, { color: colors.text }]}>
               {minutesToTimeString(minutes)}
-            </Text>
+            </AppText>
           </TouchableOpacity>
         )}
         <TouchableOpacity
           onPress={() => onChange(minutes + 10)}
           style={[adjStyles.btn, { borderColor: colors.border }]}
         >
-          <Text style={[adjStyles.btnText, { color: colors.text }]}>+</Text>
+          <AppText style={[adjStyles.btnText, { color: colors.text }]}>+</AppText>
         </TouchableOpacity>
       </View>
     </View>
@@ -242,22 +242,22 @@ export default function ScheduleFormModal({
           <View style={[styles.sheet, { backgroundColor: colors.surface, maxHeight: Dimensions.get('window').height - insets.top - 10 }]}>
             {/* 헤더 */}
             <View style={styles.header}>
-              <Text style={[styles.headerTitle, { color: colors.text }]}>
+              <AppText style={[styles.headerTitle, { color: colors.text }]}>
                 {isEditing ? '일정 수정' : '새 일정'}
-              </Text>
+              </AppText>
               <View style={styles.headerRight}>
                 {/* 수면 토글 */}
                 <TouchableOpacity
                   onPress={() => setScheduleType(t => t === 'sleep' ? 'normal' : 'sleep')}
                   style={[styles.sleepChip, scheduleType === 'sleep' && styles.sleepChipActive]}
                 >
-                  <Text style={[styles.sleepChipText, scheduleType === 'sleep' && styles.sleepChipTextActive]}>
+                  <AppText style={[styles.sleepChipText, scheduleType === 'sleep' && styles.sleepChipTextActive]}>
                     🌙 수면
-                  </Text>
+                  </AppText>
                 </TouchableOpacity>
                 {isEditing && (
                   <TouchableOpacity onPress={onDelete}>
-                    <Text style={styles.deleteText}>삭제</Text>
+                    <AppText style={styles.deleteText}>삭제</AppText>
                   </TouchableOpacity>
                 )}
               </View>
@@ -322,9 +322,9 @@ export default function ScheduleFormModal({
                         active && styles.repeatChipActive,
                       ]}
                     >
-                      <Text style={[styles.repeatChipText, { color: active ? '#fff' : colors.textSecondary }]}>
+                      <AppText style={[styles.repeatChipText, { color: active ? '#fff' : colors.textSecondary }]}>
                         {opt.label}
-                      </Text>
+                      </AppText>
                     </TouchableOpacity>
                   );
                 })}
@@ -354,9 +354,9 @@ export default function ScheduleFormModal({
                             selected && styles.dayChipActive,
                           ]}
                         >
-                          <Text style={[styles.dayChipText, { color: selected ? '#fff' : colors.textSecondary }]}>
+                          <AppText style={[styles.dayChipText, { color: selected ? '#fff' : colors.textSecondary }]}>
                             {label}
-                          </Text>
+                          </AppText>
                         </TouchableOpacity>
                       );
                     })}
@@ -387,9 +387,9 @@ export default function ScheduleFormModal({
                         isSelected && styles.chipSelected,
                       ]}
                     >
-                      <Text style={[styles.chipText, { color: isSelected ? '#fff' : cat.color }]}>
+                      <AppText style={[styles.chipText, { color: isSelected ? '#fff' : cat.color }]}>
                         {cat.label}
-                      </Text>
+                      </AppText>
                     </TouchableOpacity>
                   );
                 })}
@@ -404,14 +404,14 @@ export default function ScheduleFormModal({
                 style={[styles.button, { borderColor: colors.border }]}
                 onPress={onCancel}
               >
-                <Text style={[styles.buttonText, { color: colors.textSecondary }]}>취소</Text>
+                <AppText style={[styles.buttonText, { color: colors.textSecondary }]}>취소</AppText>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.button, styles.confirmButton, { opacity: title.trim() ? 1 : 0.4 }]}
                 onPress={handleConfirm}
                 disabled={!title.trim()}
               >
-                <Text style={[styles.buttonText, { color: '#fff' }]}>저장</Text>
+                <AppText style={[styles.buttonText, { color: '#fff' }]}>저장</AppText>
               </TouchableOpacity>
             </View>
           </View>

@@ -6,6 +6,7 @@ export type BlockSize = "small" | "medium" | "large";
 export type TimeFormat = "12h" | "24h";
 export type TextSize = "small" | "medium" | "large";
 export type TextPosition = "left" | "center" | "right";
+export type FontFamily = "system" | "pretendard" | "noto-sans-kr";
 
 export const ROW_HEIGHTS: Record<BlockSize, number> = {
   small: 44,
@@ -27,6 +28,7 @@ export type BackupSettingsPayload = {
   gridStartHour: number;
   gridEndHour: number;
   darkMode: boolean;
+  fontFamily?: FontFamily;
 };
 
 type SettingsStore = {
@@ -39,6 +41,7 @@ type SettingsStore = {
   rowHeight: number;
   fontSize: number;
   darkMode: boolean;
+  fontFamily: FontFamily;
   updatedAt: number;
   setBlockSize: (size: BlockSize) => void;
   setTimeFormat: (format: TimeFormat) => void;
@@ -46,6 +49,7 @@ type SettingsStore = {
   setTextPosition: (pos: TextPosition) => void;
   setGridRange: (startHour: number, endHour: number) => void;
   setDarkMode: (v: boolean) => void;
+  setFontFamily: (f: FontFamily) => void;
   restoreFromCloud: (s: BackupSettingsPayload) => void;
 };
 
@@ -61,6 +65,7 @@ export const useSettingsStore = create<SettingsStore>()(
       rowHeight: ROW_HEIGHTS.medium,
       fontSize: TEXT_SIZES.medium,
       darkMode: false,
+      fontFamily: "system",
       updatedAt: 0,
 
       setBlockSize: (size) => set({ blockSize: size, rowHeight: ROW_HEIGHTS[size], updatedAt: Date.now() }),
@@ -69,6 +74,7 @@ export const useSettingsStore = create<SettingsStore>()(
       setTextPosition: (pos) => set({ textPosition: pos, updatedAt: Date.now() }),
       setGridRange: (startHour, endHour) => set({ gridStartHour: startHour, gridEndHour: endHour, updatedAt: Date.now() }),
       setDarkMode: (v) => set({ darkMode: v, updatedAt: Date.now() }),
+      setFontFamily: (f) => set({ fontFamily: f, updatedAt: Date.now() }),
 
       restoreFromCloud: (s) => set({
         blockSize: s.blockSize as BlockSize,
@@ -78,6 +84,7 @@ export const useSettingsStore = create<SettingsStore>()(
         gridStartHour: s.gridStartHour,
         gridEndHour: s.gridEndHour,
         darkMode: s.darkMode,
+        fontFamily: (s.fontFamily as FontFamily) ?? 'system',
         rowHeight: ROW_HEIGHTS[s.blockSize as BlockSize] ?? ROW_HEIGHTS.medium,
         fontSize: TEXT_SIZES[s.textSize as TextSize] ?? TEXT_SIZES.medium,
       }),
