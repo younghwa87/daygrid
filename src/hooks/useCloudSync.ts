@@ -35,8 +35,8 @@ export function useCloudSync() {
         });
         setLastSyncAt(Date.now());
         updateTodayWidget();
-      } catch (e) {
-        console.warn('[CloudSync] push 실패:', e);
+      } catch {
+        // 동기화 실패 — 다음 변경 시 재시도
       }
     }, DEBOUNCE_MS);
 

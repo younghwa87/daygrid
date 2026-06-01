@@ -88,7 +88,6 @@ class NotificationService {
   // 권한 요청 (실기기 여부 먼저 확인)
   async requestPermission(): Promise<boolean> {
     if (!Device.isDevice) {
-      console.warn('[알림] 실기기에서만 알림이 동작합니다 (시뮬레이터/에뮬레이터 제외)');
       return false;
     }
     try {
@@ -100,7 +99,6 @@ class NotificationService {
 
       const { status } = await Notifications.requestPermissionsAsync();
       if (status !== 'granted') {
-        console.warn('[알림] 권한 거부됨');
         Alert.alert(
           '알림 권한 필요',
           '설정 > 앱 > 알림 허용에서 알림을 켜주세요',
@@ -113,8 +111,7 @@ class NotificationService {
       }
       await this.checkExactAlarmPermission();
       return true;
-    } catch (e) {
-      console.error('[알림] 권한 요청 실패', e);
+    } catch {
       return false;
     }
   }
@@ -150,8 +147,8 @@ class NotificationService {
         lightColor: '#FF231F7C',
         sound: 'default',
       });
-    } catch (e) {
-      console.error('[알림] 채널 생성 실패', e);
+    } catch {
+      // 채널 생성 실패 시 기본 채널로 폴백
     }
   }
 
@@ -159,7 +156,6 @@ class NotificationService {
   async scheduleAlarm(params: AlarmParams): Promise<string> {
     try {
       if (params.triggerDate <= new Date()) {
-        console.warn(`[알림] 과거 시각 스킵: ${params.id}`);
         return '';
       }
       await Notifications.scheduleNotificationAsync({
@@ -177,8 +173,7 @@ class NotificationService {
         },
       });
       return params.id;
-    } catch (e) {
-      console.error('[알림] 스케줄링 실패', e);
+    } catch {
       return '';
     }
   }
@@ -238,7 +233,6 @@ class NotificationService {
       const existing = await Notifications.getAllScheduledNotificationsAsync();
       const available = IOS_SAFE_LIMIT - existing.length;
       if (alarms.length > available) {
-        console.warn(`[알림] 슬롯 부족 (가용: ${available}개), 가까운 순으로 재정렬`);
         alarms.sort((a, b) => a.triggerDate.getTime() - b.triggerDate.getTime());
         alarms.splice(available);
       }
@@ -266,8 +260,8 @@ class NotificationService {
   async cancelAlarm(id: string): Promise<void> {
     try {
       await Notifications.cancelScheduledNotificationAsync(id);
-    } catch (e) {
-      console.error('[알림] 취소 실패', e);
+    } catch {
+      // 취소 실패 시 무시
     }
   }
 
@@ -277,8 +271,8 @@ class NotificationService {
       const scheduled = await Notifications.getAllScheduledNotificationsAsync();
       const targets = scheduled.filter(n => n.identifier.startsWith(`${scheduleId}_`));
       await Promise.all(targets.map(n => this.cancelAlarm(n.identifier)));
-    } catch (e) {
-      console.error('[알림] 전체 취소 실패', e);
+    } catch {
+      // 전체 취소 실패 시 무시
     }
   }
 
@@ -319,25 +313,11 @@ class NotificationService {
       // 가까운 순 정렬 후 iOS 60개 제한 적용
       alarms.sort((a, b) => a.triggerDate.getTime() - b.triggerDate.getTime());
       const limited = Platform.OS === 'ios' ? alarms.slice(0, IOS_SAFE_LIMIT) : alarms;
-      if (Platform.OS === 'ios' && alarms.length > IOS_SAFE_LIMIT) {
-        console.warn(`[알림] rescheduleAll: ${alarms.length}개 중 ${IOS_SAFE_LIMIT}개만 등록`);
-      }
-
       for (const alarm of limited) {
         await this.scheduleAlarm(alarm);
       }
-    } catch (e) {
-      console.error('[알림] rescheduleAll 실패', e);
-    }
-  }
-
-  // 현재 등록된 알림 목록 반환 (디버깅용)
-  async getAllScheduledNotifications() {
-    try {
-      return await Notifications.getAllScheduledNotificationsAsync();
-    } catch (e) {
-      console.error('[알림] 목록 조회 실패', e);
-      return [];
+    } catch {
+      // reschedule 실패 시 무시
     }
   }
 

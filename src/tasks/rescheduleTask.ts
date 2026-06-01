@@ -28,7 +28,7 @@ export async function registerRescheduleTask(): Promise<void> {
       stopOnTerminate: false,         // 앱 종료 후에도 유지
       startOnBoot: true,              // 부팅 후 자동 시작
     });
-  } catch (e) {
-    console.warn('[백그라운드] 태스크 등록 실패', e);
+  } catch {
+    // 태스크 등록 실패 — 다음 앱 실행 시 재시도
   }
 }
