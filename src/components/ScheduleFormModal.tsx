@@ -297,7 +297,13 @@ export default function ScheduleFormModal({
                 <TimeAdjuster
                   label="종료"
                   minutes={endMins}
-                  onChange={(m) => setEnd(Math.min(30 * 60, m))}
+                  onChange={(m) => {
+                    const adjusted =
+                      scheduleType === 'sleep' && m < startMinsRef.current && m + 1440 <= 30 * 60
+                        ? m + 1440
+                        : m;
+                    setEnd(Math.min(30 * 60, adjusted));
+                  }}
                   badge={endMins >= 24 * 60 ? '+1 day' : undefined}
                 />
               </View>
