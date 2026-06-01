@@ -1,4 +1,5 @@
-import { Schedule } from '../types';
+import { Schedule, SleepBlock } from '../types';
+import { getSleepCorrection, inferSleepFromSchedules, getSleepInsight, classifySleepQuality } from './sleepUtils';
 
 // spaceDesign.md 3단계: 밀도 계산 핵심 로직
 // 현재 Schedule 타입 기준으로 구현 (energyLevel/category 미포함)
@@ -6,9 +7,10 @@ import { Schedule } from '../types';
 export type DensityLevel = 'free' | 'light' | 'normal' | 'busy' | 'overload';
 
 export interface DensityBreakdown {
-  timeDensityScore: number;   // 시간 점유율 (0~10)
-  switchIndexScore: number;   // 컨텍스트 전환 (0~10)
-  recoveryScore: number;      // 회복 불가 정도 (0~10, 높을수록 바쁨)
+  timeDensityScore: number;
+  switchIndexScore: number;
+  recoveryScore: number;
+  sleepCorrection: number;
   rawScore: number;
   finalScore: number;
 }
@@ -22,6 +24,7 @@ export interface DensityResult {
   score: number;
   breakdown: DensityBreakdown;
   insight: string;
+  sleepInsight?: string;
 }
 
 const WEIGHTS = { time: 0.40, switch: 0.35, recovery: 0.25 };
@@ -124,8 +127,24 @@ function getInsight(level: DensityLevel, b: DensityBreakdown): string {
   return '오늘은 정말 여유로운 하루예요 ✦';
 }
 
-// 메인 함수: 하루 일정 배열 → DensityResult (수면 일정 제외)
-export function calculateDayDensity(schedules: Schedule[]): DensityResult {
+export function calculateDayDensity(
+  schedules: Schedule[],
+  date?: string,
+  sleep?: SleepBlock | null
+): DensityResult {
+  // 명시적 sleep 파라미터 → 일정 중 sleep 블록 → 추론 순으로 우선 적용
+  const sleepSchedule = schedules.find(s => s.scheduleType === 'sleep');
+  const resolvedSleep: SleepBlock | null = sleep ?? (
+    sleepSchedule
+      ? { id: sleepSchedule.id, date: sleepSchedule.date, bedTime: sleepSchedule.startTime,
+          wakeTime: sleepSchedule.endTime,
+          durationHours: (sleepSchedule.endTime - sleepSchedule.startTime) / 60,
+          quality: classifySleepQuality((sleepSchedule.endTime - sleepSchedule.startTime) / 60),
+          source: 'manual' as const }
+      : date ? inferSleepFromSchedules(schedules, date) : null
+  );
+  const sleepCorrection = resolvedSleep ? getSleepCorrection(resolvedSleep.quality) : 1.0;
+
   const active = schedules.filter(s => s.scheduleType !== 'sleep');
   const timeDensityScore = calcTimeDensity(active);
   const switchIndexScore = calcSwitchIndex(active);
@@ -134,20 +153,27 @@ export function calculateDayDensity(schedules: Schedule[]): DensityResult {
   const rawScore   = timeDensityScore * WEIGHTS.time
                    + switchIndexScore * WEIGHTS.switch
                    + recoveryScore    * WEIGHTS.recovery;
-  const finalScore = Math.min(10, rawScore);
+  const finalScore = Math.min(10, rawScore * sleepCorrection);
   const level      = classifyLevel(finalScore);
   const ui         = DENSITY_UI[level];
   const breakdown: DensityBreakdown = {
-    timeDensityScore, switchIndexScore, recoveryScore, rawScore, finalScore,
+    timeDensityScore, switchIndexScore, recoveryScore, sleepCorrection, rawScore, finalScore,
   };
 
-  return {
+  const result: DensityResult = {
     level,
     score: finalScore,
     ...ui,
     breakdown,
     insight: getInsight(level, breakdown),
   };
+
+  if (resolvedSleep) {
+    const si = getSleepInsight(resolvedSleep, result);
+    if (si) result.sleepInsight = si;
+  }
+
+  return result;
 }
 
 // 주간 인사이트 (spaceDesign.md 6단계)

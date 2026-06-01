@@ -110,8 +110,8 @@ export default function WeeklyHeatmapScreen({ visible, onClose, onDayPress }: Pr
 
   // 일별 종합 밀도 (3축 계산)
   const dayDensities: DensityResult[] = useMemo(
-    () => weekSchedules.map(ds => calculateDayDensity(ds)),
-    [weekSchedules]
+    () => weekSchedules.map((ds, i) => calculateDayDensity(ds, weekDays[i].format('YYYY-MM-DD'))),
+    [weekSchedules, weekDays]
   );
 
   // 주간 요약

@@ -1,3 +1,21 @@
+export type SleepQuality = 'poor' | 'normal' | 'good' | 'excess';
+
+export interface SleepBlock {
+  id: string;
+  date: string;
+  bedTime: number;       // 취침 시각 (분 단위, 1440 이상이면 다음날 자정 이후)
+  wakeTime: number;      // 기상 시각 (분 단위)
+  durationHours: number;
+  quality: SleepQuality;
+  source: 'manual' | 'inferred';
+}
+
+export interface ActiveRange {
+  startMinute: number;
+  endMinute: number;
+  activeMinutes: number;
+}
+
 export interface FreeBlock {
   id: string;
   startMin: number;      // 자정 기준 분 단위

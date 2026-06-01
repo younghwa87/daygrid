@@ -26,6 +26,7 @@ import {
   TextSize,
   TextPosition,
   FontFamily,
+  ThemeMode,
   ROW_HEIGHTS,
 } from '../store/settingsStore';
 import { useAppColors } from '../hooks/useAppColors';
@@ -284,7 +285,7 @@ export default function StyleSettingsScreen({ visible, onClose }: Props) {
   const insets = useSafeAreaInsets();
   const {
     blockSize, timeFormat, textSize, textPosition,
-    darkMode, setDarkMode,
+    themeMode, setThemeMode,
     fontFamily, setFontFamily,
     setBlockSize, setTimeFormat, setTextSize, setTextPosition,
     restoreFromCloud: restoreSettings,
@@ -343,10 +344,10 @@ export default function StyleSettingsScreen({ visible, onClose }: Props) {
     setSyncing(true);
     try {
       const { schedules: sc, colorCategories: cc } = useScheduleStore.getState();
-      const { blockSize: bs, timeFormat: tf, textSize: ts, textPosition: tp, gridStartHour, gridEndHour, darkMode: dm, fontFamily: ff } =
+      const { blockSize: bs, timeFormat: tf, textSize: ts, textPosition: tp, gridStartHour, gridEndHour, themeMode: tm, fontFamily: ff } =
         useSettingsStore.getState();
       const settings: BackupSettings = {
-        blockSize: bs, timeFormat: tf, textSize: ts, textPosition: tp, gridStartHour, gridEndHour, darkMode: dm, fontFamily: ff,
+        blockSize: bs, timeFormat: tf, textSize: ts, textPosition: tp, gridStartHour, gridEndHour, themeMode: tm, fontFamily: ff,
       };
       await pushBackup(user.uid, { schedules: sc, colorCategories: cc, settings, updatedAt: Date.now() });
       setLastSyncAt(Date.now());
@@ -397,12 +398,12 @@ export default function StyleSettingsScreen({ visible, onClose }: Props) {
 
           {/* 화면 설정 */}
           <View style={[styles.section, { backgroundColor: colors.surface, overflow: 'visible', zIndex: 10 }]}>
-            <SettingRow label="다크 모드">
-              <Switch
-                value={darkMode}
-                onValueChange={setDarkMode}
-                trackColor={{ false: colors.border, true: '#4A90D9' }}
-                thumbColor="#fff"
+            <SettingRow label="테마">
+              <SegCtrl<ThemeMode>
+                options={['light', 'dark', 'system']}
+                value={themeMode}
+                onChange={setThemeMode}
+                labelMap={{ light: '밝게', dark: '어둡게', system: '시스템' }}
               />
             </SettingRow>
             <SettingRow label="사이즈">

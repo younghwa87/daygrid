@@ -22,10 +22,10 @@ export function useCloudSync() {
     timerRef.current = setTimeout(async () => {
       try {
         const { schedules, colorCategories } = useScheduleStore.getState();
-        const { blockSize, timeFormat, textSize, textPosition, gridStartHour, gridEndHour, darkMode } =
+        const { blockSize, timeFormat, textSize, textPosition, gridStartHour, gridEndHour, themeMode } =
           useSettingsStore.getState();
         const settings: BackupSettings = {
-          blockSize, timeFormat, textSize, textPosition, gridStartHour, gridEndHour, darkMode,
+          blockSize, timeFormat, textSize, textPosition, gridStartHour, gridEndHour, themeMode,
         };
         await pushBackup(user.uid, {
           schedules,

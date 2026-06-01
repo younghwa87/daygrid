@@ -10,7 +10,8 @@ export type BackupSettings = {
   textPosition: string;
   gridStartHour: number;
   gridEndHour: number;
-  darkMode: boolean;
+  themeMode?: string;
+  darkMode?: boolean; // 이전 버전 호환용
   fontFamily?: string;
 };
 

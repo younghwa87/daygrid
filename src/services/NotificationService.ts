@@ -93,7 +93,10 @@ class NotificationService {
     }
     try {
       const { status: current } = await Notifications.getPermissionsAsync();
-      if (current === 'granted') return true;
+      if (current === 'granted') {
+        await this.checkExactAlarmPermission();
+        return true;
+      }
 
       const { status } = await Notifications.requestPermissionsAsync();
       if (status !== 'granted') {
@@ -108,10 +111,31 @@ class NotificationService {
         );
         return false;
       }
+      await this.checkExactAlarmPermission();
       return true;
     } catch (e) {
       console.error('[알림] 권한 요청 실패', e);
       return false;
+    }
+  }
+
+  // Android 12+ 정확한 알람 권한 확인
+  private async checkExactAlarmPermission(): Promise<void> {
+    if (Platform.OS !== 'android') return;
+    try {
+      const canSchedule = await (Notifications as any).canScheduleExactNotificationsAsync?.();
+      if (canSchedule === false) {
+        Alert.alert(
+          '정확한 알람 권한 필요',
+          '설정 > 앱 > Datile > 알람 및 리마인더에서 권한을 허용해주세요.\n허용하지 않으면 알림이 부정확하게 발송될 수 있습니다.',
+          [
+            { text: '설정으로 이동', onPress: () => Linking.openSettings() },
+            { text: '나중에', style: 'cancel' },
+          ]
+        );
+      }
+    } catch {
+      // 구버전 Android는 이 API 미지원 — 무시
     }
   }
 

@@ -15,6 +15,7 @@ import { PoorStory_400Regular } from '@expo-google-fonts/poor-story';
 
 WebBrowser.maybeCompleteAuthSession();
 import TimeGridScreen from './src/screens/TimeGridScreen';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { notificationService } from './src/services/NotificationService';
 import { useCloudSync } from './src/hooks/useCloudSync';
 import { useAuthStore } from './src/store/authStore';
@@ -62,7 +63,9 @@ export default function App() {
     <SafeAreaProvider>
       <GestureHandlerRootView style={styles.container}>
         <StatusBar style="auto" />
-        <AppContent />
+        <ErrorBoundary>
+          <AppContent />
+        </ErrorBoundary>
       </GestureHandlerRootView>
     </SafeAreaProvider>
   );
