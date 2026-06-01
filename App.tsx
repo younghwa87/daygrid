@@ -5,13 +5,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as WebBrowser from 'expo-web-browser';
 import { useFonts } from 'expo-font';
-import { NanumPenScript_400Regular } from '@expo-google-fonts/nanum-pen-script';
-import { DoHyeon_400Regular } from '@expo-google-fonts/do-hyeon';
-import { Gaegu_400Regular, Gaegu_700Bold } from '@expo-google-fonts/gaegu';
-import { GamjaFlower_400Regular } from '@expo-google-fonts/gamja-flower';
-import { HiMelody_400Regular } from '@expo-google-fonts/hi-melody';
-import { SongMyung_400Regular } from '@expo-google-fonts/song-myung';
-import { PoorStory_400Regular } from '@expo-google-fonts/poor-story';
+import { FONT_ASSETS } from './src/utils/fontAssets';
 
 WebBrowser.maybeCompleteAuthSession();
 import TimeGridScreen from './src/screens/TimeGridScreen';
@@ -47,16 +41,9 @@ function AppContent() {
 }
 
 export default function App() {
-  useFonts({
-    NanumPenScript_400Regular,
-    DoHyeon_400Regular,
-    Gaegu_400Regular,
-    Gaegu_700Bold,
-    GamjaFlower_400Regular,
-    HiMelody_400Regular,
-    SongMyung_400Regular,
-    PoorStory_400Regular,
-  });
+  // 선택된 폰트만 로드 (system이면 0개)
+  const selectedFont = useSettingsStore.getState().fontFamily;
+  useFonts(FONT_ASSETS[selectedFont] ?? {});
 
   useEffect(() => {
     notificationService.initialize();

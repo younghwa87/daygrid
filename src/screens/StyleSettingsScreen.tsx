@@ -33,6 +33,7 @@ import { useAppColors } from '../hooks/useAppColors';
 import { useScheduleStore } from '../store/scheduleStore';
 import { ColorCategory } from '../types';
 import uuid from '../utils/uuid';
+import { loadFontIfNeeded } from '../utils/fontAssets';
 
 type Props = { visible: boolean; onClose: () => void };
 
@@ -419,7 +420,13 @@ export default function StyleSettingsScreen({ visible, onClose }: Props) {
               <SegCtrl<TimeFormat> options={['12h','24h']} value={timeFormat} onChange={setTimeFormat} labelMap={{ '12h':'12시간', '24h':'24시간' }} />
             </SettingRow>
             <SettingRow label="글씨체" last zIndex={10}>
-              <FontDropdown value={fontFamily} onChange={setFontFamily} />
+              <FontDropdown
+                value={fontFamily}
+                onChange={async (v) => {
+                  await loadFontIfNeeded(v);
+                  setFontFamily(v);
+                }}
+              />
             </SettingRow>
           </View>
 
