@@ -305,41 +305,6 @@ export default function WeeklyHeatmapScreen({ visible, onClose, onDayPress }: Pr
           <View style={[styles.summaryCard, { backgroundColor: colors.surface }]}>
             <AppText style={[styles.summaryTitle, { color: colors.text }]}>주간 밀도 분석</AppText>
 
-            {/* 주간 인사이트 */}
-            <View style={[styles.insightRow, { backgroundColor: isDark ? summary.busiestDensity.darkColor + '44' : summary.busiestDensity.color + '66' }]}>
-              <AppText style={[styles.insightText, { color: colors.text }]}>{summary.weekInsight}</AppText>
-            </View>
-
-            {/* 수치 요약 */}
-            <View style={styles.statsGrid}>
-              <View style={styles.statItem}>
-                <AppText style={[styles.statLabel, { color: colors.textSecondary }]}>총 일정 시간</AppText>
-                <AppText style={[styles.statValue, { color: colors.text }]}>
-                  {summary.totalH}시간 {summary.totalM}분
-                </AppText>
-              </View>
-              <View style={styles.statItem}>
-                <AppText style={[styles.statLabel, { color: colors.textSecondary }]}>여백 시간</AppText>
-                <AppText style={[styles.statValue, { color: colors.text }]}>
-                  {summary.freeH}시간 {summary.freeM}분
-                </AppText>
-              </View>
-              <View style={styles.statItem}>
-                <AppText style={[styles.statLabel, { color: colors.textSecondary }]}>가장 바쁜 날</AppText>
-                <AppText style={[styles.statValue, { color: colors.text }]}>{summary.busiestDay} 🔥</AppText>
-              </View>
-              <View style={styles.statItem}>
-                <AppText style={[styles.statLabel, { color: colors.textSecondary }]}>가장 여유로운 날</AppText>
-                <AppText style={[styles.statValue, { color: colors.text }]}>{summary.freestDay} ✦</AppText>
-              </View>
-              {summary.peakHour && (
-                <View style={styles.statItem}>
-                  <AppText style={[styles.statLabel, { color: colors.textSecondary }]}>피크 타임</AppText>
-                  <AppText style={[styles.statValue, { color: colors.text }]}>{summary.peakHour} ⚡</AppText>
-                </View>
-              )}
-            </View>
-
             {/* 요일별 밀도 바 */}
             <AppText style={[styles.barTitle, { color: colors.textSecondary }]}>요일별 밀도</AppText>
             <View style={styles.densityBars}>
@@ -362,6 +327,41 @@ export default function WeeklyHeatmapScreen({ visible, onClose, onDayPress }: Pr
                   </View>
                 );
               })}
+            </View>
+
+            {/* 주간 인사이트 */}
+            <View style={[styles.insightRow, { backgroundColor: isDark ? summary.busiestDensity.darkColor + '44' : summary.busiestDensity.color + '66' }]}>
+              <AppText style={[styles.insightText, { color: colors.text }]}>{summary.weekInsight}</AppText>
+            </View>
+
+            {/* 수치 요약 */}
+            <View style={styles.statsGrid}>
+              <View style={styles.statItem}>
+                <AppText style={[styles.statLabel, { color: colors.textSecondary }]}>총 일정 시간</AppText>
+                <AppText style={[styles.statValue, { color: colors.text }]}>
+                  {summary.totalH}시간 {summary.totalM}분
+                </AppText>
+              </View>
+              <View style={styles.statItem}>
+                <AppText style={[styles.statLabel, { color: colors.textSecondary }]}>여백 시간</AppText>
+                <AppText style={[styles.statValue, { color: colors.text }]}>
+                  {Math.max(0, summary.freeH)}시간 {Math.max(0, summary.freeM)}분
+                </AppText>
+              </View>
+              <View style={styles.statItem}>
+                <AppText style={[styles.statLabel, { color: colors.textSecondary }]}>가장 바쁜 날</AppText>
+                <AppText style={[styles.statValue, { color: colors.text }]}>{summary.busiestDay} 🔥</AppText>
+              </View>
+              <View style={styles.statItem}>
+                <AppText style={[styles.statLabel, { color: colors.textSecondary }]}>가장 여유로운 날</AppText>
+                <AppText style={[styles.statValue, { color: colors.text }]}>{summary.freestDay} ✦</AppText>
+              </View>
+              {summary.peakHour && (
+                <View style={styles.statItem}>
+                  <AppText style={[styles.statLabel, { color: colors.textSecondary }]}>피크 타임</AppText>
+                  <AppText style={[styles.statValue, { color: colors.text }]}>{summary.peakHour} ⚡</AppText>
+                </View>
+              )}
             </View>
           </View>
 
