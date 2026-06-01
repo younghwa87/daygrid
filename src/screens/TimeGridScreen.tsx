@@ -64,6 +64,7 @@ export default function TimeGridScreen() {
   const [modalState, setModalState] = useState<ModalState>(null);
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [heatmapVisible, setHeatmapVisible] = useState(false);
+  const [scrollToHour, setScrollToHour] = useState<number | undefined>();
   const [calendarVisible, setCalendarVisible] = useState(false);
 
   useNotificationHandler();
@@ -323,6 +324,7 @@ export default function TimeGridScreen() {
           <TimeGrid
             schedules={schedules}
             selectedDate={selectedDate}
+            scrollToHour={scrollToHour}
             onStartCreating={handleStartCreating}
             onEditSchedule={handleEditSchedule}
             onMoveSchedule={handleMoveSchedule}
@@ -362,7 +364,7 @@ export default function TimeGridScreen() {
       {/* 하단 바 */}
       <View style={[styles.bottomBar, { borderTopColor: colors.border, backgroundColor: colors.background }]}>
         <ClockText style={[styles.clockText, { color: colors.textSecondary }]} />
-        <TouchableOpacity style={styles.calButton} onPress={() => setHeatmapVisible(true)}>
+        <TouchableOpacity style={styles.calButton} onPress={() => { setScrollToHour(undefined); setHeatmapVisible(true); }}>
           <AppText style={{ fontSize: 18 }}>🗓️</AppText>
         </TouchableOpacity>
       </View>
@@ -382,7 +384,7 @@ export default function TimeGridScreen() {
       <WeeklyHeatmapScreen
         visible={heatmapVisible}
         onClose={() => setHeatmapVisible(false)}
-        onDayPress={(date) => { setSelectedDate(date); setHeatmapVisible(false); }}
+        onDayPress={(date, hour) => { setSelectedDate(date); setScrollToHour(hour); setHeatmapVisible(false); }}
       />
 
       {/* 일정 생성/수정 모달 */}

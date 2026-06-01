@@ -17,6 +17,7 @@ const COLS = 6;
 type Props = {
   schedules: Schedule[];
   selectedDate: string;
+  scrollToHour?: number;
   onStartCreating: (startMinutes: number, endMinutes: number) => void;
   onEditSchedule: (schedule: Schedule) => void;
   onMoveSchedule: (scheduleId: string, newStartTime: number, newEndTime: number) => void;
@@ -38,7 +39,7 @@ type ResizeState = {
   currentEndMins: number;
 } | null;
 
-export default React.memo(function TimeGrid({ schedules, selectedDate, onStartCreating, onEditSchedule, onMoveSchedule, onResizeSchedule }: Props) {
+export default React.memo(function TimeGrid({ schedules, selectedDate, scrollToHour, onStartCreating, onEditSchedule, onMoveSchedule, onResizeSchedule }: Props) {
   const { colors, isDark } = useAppColors();
   const { rowHeight, timeFormat, gridStartHour, gridEndHour, fontSize, textPosition } = useSettingsStore();
 
@@ -74,6 +75,14 @@ export default React.memo(function TimeGrid({ schedules, selectedDate, onStartCr
     const scrollTo = Math.max(0, row * rowHeight - 120);
     setTimeout(() => scrollViewRef.current?.scrollTo({ y: scrollTo, animated: true }), 300);
   }, [selectedDate, rowHeight, gridStartHour]);
+
+  // 히트맵 셀 탭 시 해당 시간대로 스크롤
+  useEffect(() => {
+    if (scrollToHour === undefined || rowHeight === 0) return;
+    const row = Math.max(0, scrollToHour - gridStartHour);
+    const y = Math.max(0, row * rowHeight - 120);
+    setTimeout(() => scrollViewRef.current?.scrollTo({ y, animated: true }), 300);
+  }, [scrollToHour, rowHeight, gridStartHour]);
 
   function posToMins(x: number, y: number): number {
     const cw = colWidthRef.current;

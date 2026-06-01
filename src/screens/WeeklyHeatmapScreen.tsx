@@ -1,10 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import {
   View,
   StyleSheet,
   Modal,
   ScrollView,
   TouchableOpacity,
+  Animated,
 } from 'react-native';
 import { AppText } from '../components/AppText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -22,6 +23,13 @@ import {
   DensityResult,
 } from '../utils/densityCalculator';
 
+function formatHour(h: number): string {
+  if (h === 0) return '자정';
+  if (h < 12) return `오전 ${h}시`;
+  if (h === 12) return '정오';
+  return `오후 ${h - 12}시`;
+}
+
 function getHolidayName(dateStr: string): string | null {
   const result = isHoliday(new Date(dateStr));
   return result ? result.nameKo : null;
@@ -30,7 +38,7 @@ function getHolidayName(dateStr: string): string | null {
 type Props = {
   visible: boolean;
   onClose: () => void;
-  onDayPress: (date: string) => void;
+  onDayPress: (date: string, hour?: number) => void;
 };
 
 const LEGEND_LABELS = ['여유', '가벼움', '보통', '바쁨', '과부하'];
@@ -61,6 +69,40 @@ function calcHourDensity(daySchedules: Schedule[], hour: number): number {
   return 4;
 }
 
+const AnimatedBar = React.memo(function AnimatedBar({
+  score, color, darkColor, isDark, isFuture, delayMs, visible,
+}: {
+  score: number; color: string; darkColor: string;
+  isDark: boolean; isFuture: boolean; delayMs: number; visible: boolean;
+}) {
+  const targetH = Math.max(4, (score / 10) * 40);
+  const animH = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    animH.setValue(0);
+    if (!visible) return;
+    Animated.sequence([
+      Animated.delay(delayMs),
+      Animated.spring(animH, { toValue: targetH, damping: 12, stiffness: 100, useNativeDriver: false }),
+    ]).start();
+  }, [visible, targetH, delayMs]);
+
+  const fillColor = isFuture
+    ? (isDark ? '#374151' : '#D1D5DB')
+    : (isDark ? darkColor : color);
+
+  return (
+    <View style={barChartStyles.track}>
+      <Animated.View style={[barChartStyles.fill, { height: animH, backgroundColor: fillColor }]} />
+    </View>
+  );
+});
+
+const barChartStyles = StyleSheet.create({
+  track: { flex: 1, height: 40, backgroundColor: '#00000010', borderRadius: 4, justifyContent: 'flex-end', overflow: 'hidden' },
+  fill:  { width: '100%', borderRadius: 4 },
+});
+
 const HeatmapCell = React.memo(function HeatmapCell({
   density,
   isDark,
@@ -88,8 +130,15 @@ export default function WeeklyHeatmapScreen({ visible, onClose, onDayPress }: Pr
   const insets = useSafeAreaInsets();
   const { getSchedulesByDate, schedules } = useScheduleStore();
 
-  const weekStart = useMemo(() => toMonday(dayjs()), []);
+  const [weekOffset, setWeekOffset] = useState(0);
   const today = dayjs().format('YYYY-MM-DD');
+
+  // 모달 열릴 때 현재 주로 리셋
+  useEffect(() => {
+    if (visible) setWeekOffset(0);
+  }, [visible]);
+
+  const weekStart = useMemo(() => toMonday(dayjs()).add(weekOffset, 'week'), [weekOffset]);
 
   const weekDays = useMemo(
     () => Array.from({ length: 7 }, (_, i) => weekStart.add(i, 'day')),
@@ -120,8 +169,13 @@ export default function WeeklyHeatmapScreen({ visible, onClose, onDayPress }: Pr
       ds.filter(s => s.scheduleType !== 'sleep')
         .reduce((sum, s) => sum + Math.max(0, s.endTime - s.startTime), 0)
     );
+    const sleepMins = weekSchedules.map(ds =>
+      ds.filter(s => s.scheduleType === 'sleep')
+        .reduce((sum, s) => sum + Math.max(0, s.endTime - s.startTime), 0)
+    );
     const totalMins = dayMins.reduce((a, b) => a + b, 0);
-    const freeMins  = 7 * 24 * 60 - totalMins;
+    const totalSleepMins = sleepMins.reduce((a, b) => a + b, 0);
+    const freeMins  = 7 * 24 * 60 - totalMins - totalSleepMins;
     const busiestIdx = dayDensities.reduce(
       (maxI, d, i, arr) => (d.score > arr[maxI].score ? i : maxI), 0
     );
@@ -137,8 +191,13 @@ export default function WeeklyHeatmapScreen({ visible, onClose, onDayPress }: Pr
       freestDay:  `${DAY_LABELS[freestIdx]}요일`,
       weekInsight: getWeekInsight(dayDensities, DAY_LABELS),
       busiestDensity: dayDensities[busiestIdx],
+      peakHour: (() => {
+        const hourTotals = HOURS.map(h => matrix[h].reduce((a, b) => a + b, 0));
+        const max = Math.max(...hourTotals);
+        return max > 0 ? formatHour(hourTotals.indexOf(max)) : null;
+      })(),
     };
-  }, [weekSchedules, dayDensities]);
+  }, [weekSchedules, dayDensities, matrix]);
 
   const weekLabel = `${weekStart.format('YYYY.MM.DD')} ~ ${weekStart.add(6, 'day').format('MM.DD')}`;
 
@@ -151,7 +210,15 @@ export default function WeeklyHeatmapScreen({ visible, onClose, onDayPress }: Pr
           <TouchableOpacity onPress={onClose} style={styles.sideBtn}>
             <AppText style={styles.closeTxt}>‹</AppText>
           </TouchableOpacity>
-          <AppText style={[styles.weekLabel, { color: colors.text }]}>{weekLabel}</AppText>
+          <View style={styles.weekNav}>
+            <TouchableOpacity onPress={() => setWeekOffset(o => o - 1)} style={styles.navBtn}>
+              <AppText style={[styles.navTxt, { color: colors.textSecondary }]}>‹</AppText>
+            </TouchableOpacity>
+            <AppText style={[styles.weekLabel, { color: colors.text }]}>{weekLabel}</AppText>
+            <TouchableOpacity onPress={() => setWeekOffset(o => o + 1)} style={styles.navBtn}>
+              <AppText style={[styles.navTxt, { color: colors.textSecondary }]}>›</AppText>
+            </TouchableOpacity>
+          </View>
           <View style={styles.sideBtn} />
         </View>
 
@@ -211,7 +278,7 @@ export default function WeeklyHeatmapScreen({ visible, onClose, onDayPress }: Pr
                     key={di}
                     density={matrix[hour][di]}
                     isDark={isDark}
-                    onPress={() => onDayPress(d.format('YYYY-MM-DD'))}
+                    onPress={() => onDayPress(d.format('YYYY-MM-DD'), hour)}
                   />
                 ))}
               </View>
@@ -265,29 +332,36 @@ export default function WeeklyHeatmapScreen({ visible, onClose, onDayPress }: Pr
                 <AppText style={[styles.statLabel, { color: colors.textSecondary }]}>가장 여유로운 날</AppText>
                 <AppText style={[styles.statValue, { color: colors.text }]}>{summary.freestDay} ✦</AppText>
               </View>
+              {summary.peakHour && (
+                <View style={styles.statItem}>
+                  <AppText style={[styles.statLabel, { color: colors.textSecondary }]}>피크 타임</AppText>
+                  <AppText style={[styles.statValue, { color: colors.text }]}>{summary.peakHour} ⚡</AppText>
+                </View>
+              )}
             </View>
 
             {/* 요일별 밀도 바 */}
             <AppText style={[styles.barTitle, { color: colors.textSecondary }]}>요일별 밀도</AppText>
             <View style={styles.densityBars}>
-              {dayDensities.map((d, i) => (
-                <View key={i} style={styles.barCol}>
-                  <View style={styles.barTrack}>
-                    <View
-                      style={[
-                        styles.barFill,
-                        {
-                          height: `${Math.max(4, d.score * 10)}%`,
-                          backgroundColor: isDark ? d.darkColor : d.color,
-                        },
-                      ]}
+              {dayDensities.map((d, i) => {
+                const isFuture = weekDays[i].isAfter(dayjs(), 'day');
+                return (
+                  <View key={i} style={styles.barCol}>
+                    <AnimatedBar
+                      score={d.score}
+                      color={d.color}
+                      darkColor={d.darkColor}
+                      isDark={isDark}
+                      isFuture={isFuture}
+                      delayMs={i * 60}
+                      visible={visible}
                     />
+                    <AppText style={[styles.barDayLabel, { color: isFuture ? colors.border : colors.textSecondary }]}>
+                      {DAY_LABELS[i]}
+                    </AppText>
                   </View>
-                  <AppText style={[styles.barDayLabel, { color: colors.textSecondary }]}>
-                    {DAY_LABELS[i]}
-                  </AppText>
-                </View>
-              ))}
+                );
+              })}
             </View>
           </View>
 
@@ -308,7 +382,10 @@ const styles = StyleSheet.create({
   },
   sideBtn:   { width: 44 },
   closeTxt:  { fontSize: 24, lineHeight: 26, color: '#4A90D9' },
-  weekLabel: { flex: 1, fontSize: 14, fontWeight: '700', textAlign: 'center' },
+  weekNav:   { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4 },
+  navBtn:    { padding: 8 },
+  navTxt:    { fontSize: 20, lineHeight: 24 },
+  weekLabel: { fontSize: 14, fontWeight: '700', textAlign: 'center' },
   dayHeaderRow: {
     flexDirection: 'row',
     paddingVertical: 8,
@@ -356,16 +433,7 @@ const styles = StyleSheet.create({
   statLabel: { fontSize: 11, marginBottom: 3 },
   statValue: { fontSize: 14, fontWeight: '600' },
   barTitle: { fontSize: 11, fontWeight: '600', marginBottom: 4 },
-  densityBars: { flexDirection: 'row', gap: 4, height: 60, alignItems: 'flex-end' },
+  densityBars: { flexDirection: 'row', gap: 4, alignItems: 'flex-end' },
   barCol: { flex: 1, alignItems: 'center', gap: 3 },
-  barTrack: {
-    flex: 1,
-    width: '100%',
-    backgroundColor: '#00000010',
-    borderRadius: 4,
-    justifyContent: 'flex-end',
-    overflow: 'hidden',
-  },
-  barFill: { width: '100%', borderRadius: 4 },
   barDayLabel: { fontSize: 9, fontWeight: '600' },
 });
