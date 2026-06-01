@@ -166,11 +166,11 @@ export default function WeeklyHeatmapScreen({ visible, onClose, onDayPress }: Pr
   // 주간 요약
   const summary = useMemo(() => {
     const dayMins = weekSchedules.map(ds =>
-      ds.filter(s => s.scheduleType !== 'sleep')
+      ds.filter(s => s.scheduleType !== 'sleep' && !s.isOverflow)
         .reduce((sum, s) => sum + Math.max(0, s.endTime - s.startTime), 0)
     );
     const sleepMins = weekSchedules.map(ds =>
-      ds.filter(s => s.scheduleType === 'sleep')
+      ds.filter(s => s.scheduleType === 'sleep' && !s.isOverflow)
         .reduce((sum, s) => sum + Math.max(0, s.endTime - s.startTime), 0)
     );
     const totalMins = dayMins.reduce((a, b) => a + b, 0);
