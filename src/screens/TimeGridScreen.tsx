@@ -130,6 +130,12 @@ export default function TimeGridScreen() {
       ? (allSchedules.find((s) => s.id === schedule.id) ?? schedule)
       : schedule;
 
+    // 오버플로우(자정 넘긴 구간) 탭 → 원본 전체 수정으로 바로 연결
+    if (schedule.isOverflow) {
+      setModalState({ mode: 'edit', schedule: original, editScope: 'all' });
+      return;
+    }
+
     if (original.repeat === 'none') {
       setModalState({ mode: 'edit', schedule: original, editScope: 'all' });
       return;
