@@ -33,6 +33,9 @@ function AppContent() {
     pullBackup(user.uid)
       .then((backup) => {
         if (!backup || backup.updatedAt <= lastSyncAt) return;
+        // 클라우드 데이터가 비어있고 로컬에 일정이 있으면 pull 생략
+        const localSchedules = useScheduleStore.getState().schedules;
+        if (backup.schedules.length === 0 && localSchedules.length > 0) return;
         useScheduleStore.getState().restoreFromCloud(backup.schedules, backup.colorCategories);
         useSettingsStore.getState().restoreFromCloud(backup.settings as any);
         setLastSyncAt(backup.updatedAt);

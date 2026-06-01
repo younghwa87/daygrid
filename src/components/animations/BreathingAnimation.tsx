@@ -34,7 +34,7 @@ function Particle({ color, x, delay }: ParticleProps) {
       )
     );
     return () => cancelAnimation(progress);
-  }, []);
+  }, [delay]);
 
   const style = useAnimatedStyle(() => {
     const p = progress.value;

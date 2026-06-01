@@ -7,10 +7,21 @@ import { notificationService } from '../services/NotificationService';
 export function useNotificationHandler() {
   const { schedules, setSelectedDate } = useScheduleStore();
   const appState = useRef(AppState.currentState);
+  // 콜드 스타트 딥링크 중복 처리 방지: 처리한 identifier 기록
+  const handledResponseId = useRef<string | null>(null);
 
   const navigateToSchedule = (scheduleId: string) => {
     const schedule = schedules.find(s => s.id === scheduleId);
     if (schedule) setSelectedDate(schedule.date);
+  };
+
+  const handleLastResponse = (response: Notifications.NotificationResponse | null) => {
+    if (!response) return;
+    const id = response.notification.request.identifier;
+    if (handledResponseId.current === id) return;
+    handledResponseId.current = id;
+    const scheduleId = response.notification.request.content.data?.scheduleId as string | undefined;
+    if (scheduleId) navigateToSchedule(scheduleId);
   };
 
   useEffect(() => {
@@ -26,21 +37,13 @@ export function useNotificationHandler() {
     });
 
     // 앱이 종료된 상태에서 알림 탭으로 실행된 경우
-    Notifications.getLastNotificationResponseAsync().then(response => {
-      if (!response) return;
-      const scheduleId = response.notification.request.content.data?.scheduleId as string | undefined;
-      if (scheduleId) navigateToSchedule(scheduleId);
-    });
+    Notifications.getLastNotificationResponseAsync().then(handleLastResponse);
 
     // AppState 'active' 전환 시: 탭 확인 + 알람 자동 갱신
     const appStateListener = AppState.addEventListener('change', nextState => {
       if (appState.current !== 'active' && nextState === 'active') {
-        // 백그라운드 복귀 시 알림 탭 확인
-        Notifications.getLastNotificationResponseAsync().then(response => {
-          if (!response) return;
-          const scheduleId = response.notification.request.content.data?.scheduleId as string | undefined;
-          if (scheduleId) navigateToSchedule(scheduleId);
-        });
+        // 백그라운드 복귀 시 알림 탭 확인 (중복 방지 포함)
+        Notifications.getLastNotificationResponseAsync().then(handleLastResponse);
         // 알람 자동 갱신 (지나간 알람 정리 + 재등록)
         notificationService.rescheduleAll(schedules);
       }
