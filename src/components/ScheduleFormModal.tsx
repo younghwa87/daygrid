@@ -48,7 +48,7 @@ function parseTimeInput(raw: string): number | null {
     const [hPart, mPart] = s.split(':');
     const h = parseInt(hPart, 10);
     const m = parseInt(mPart, 10);
-    if (isNaN(h) || isNaN(m) || m < 0 || m > 59 || h < 0 || h > 30) return null;
+    if (isNaN(h) || isNaN(m) || m < 0 || m > 59 || h < 0 || h > 36) return null;
     return h * 60 + m;
   }
 
@@ -58,7 +58,7 @@ function parseTimeInput(raw: string): number | null {
   // 1~4자리 숫자
   if (s.length <= 2) {
     // "9" → 9:00, "14" → 14:00
-    if (n < 0 || n > 30) return null;
+    if (n < 0 || n > 36) return null;
     return n * 60;
   }
   if (s.length === 3) {
@@ -299,10 +299,10 @@ export default function ScheduleFormModal({
                   minutes={endMins}
                   onChange={(m) => {
                     const adjusted =
-                      scheduleType === 'sleep' && m < startMinsRef.current && m + 1440 <= 30 * 60
+                      scheduleType === 'sleep' && m < startMinsRef.current && m + 1440 <= 36 * 60
                         ? m + 1440
                         : m;
-                    setEnd(Math.min(30 * 60, adjusted));
+                    setEnd(Math.min(36 * 60, adjusted));
                   }}
                   badge={endMins >= 24 * 60 ? '+1 day' : undefined}
                 />
