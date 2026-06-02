@@ -333,7 +333,6 @@ export default React.memo(function TimeGrid({ schedules, selectedDate, scrollToH
                 freeBlock={block}
                 rowHeight={rowHeight}
                 gridStartMin={gridStartHour * 60}
-                onPressAdd={(startMin, endMin) => onStartCreating(startMin, endMin)}
               />
             ))}
 

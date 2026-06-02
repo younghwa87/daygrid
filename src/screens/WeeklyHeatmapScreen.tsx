@@ -6,7 +6,10 @@ import {
   ScrollView,
   TouchableOpacity,
   Animated,
+  Dimensions,
 } from 'react-native';
+
+const SCREEN_W = Dimensions.get('window').width;
 import { AppText } from '../components/AppText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import dayjs from 'dayjs';
@@ -133,9 +136,20 @@ export default function WeeklyHeatmapScreen({ visible, onClose, onDayPress }: Pr
   const [weekOffset, setWeekOffset] = useState(0);
   const today = dayjs().format('YYYY-MM-DD');
 
-  // 모달 열릴 때 현재 주로 리셋
+  // 오른쪽에서 슬라이드 인/아웃
+  const slideX = useRef(new Animated.Value(SCREEN_W)).current;
+  const [modalVisible, setModalVisible] = useState(visible);
+
   useEffect(() => {
-    if (visible) setWeekOffset(0);
+    if (visible) {
+      setModalVisible(true);
+      setWeekOffset(0);
+      Animated.timing(slideX, { toValue: 0, duration: 280, useNativeDriver: true }).start();
+    } else {
+      Animated.timing(slideX, { toValue: SCREEN_W, duration: 250, useNativeDriver: true }).start(
+        () => setModalVisible(false)
+      );
+    }
   }, [visible]);
 
   const weekStart = useMemo(() => toMonday(dayjs()).add(weekOffset, 'week'), [weekOffset]);
@@ -202,8 +216,8 @@ export default function WeeklyHeatmapScreen({ visible, onClose, onDayPress }: Pr
   const weekLabel = `${weekStart.format('YYYY.MM.DD')} ~ ${weekStart.add(6, 'day').format('MM.DD')}`;
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+    <Modal visible={modalVisible} transparent animationType="none" onRequestClose={onClose}>
+      <Animated.View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top, paddingBottom: insets.bottom, transform: [{ translateX: slideX }] }]}>
 
         {/* 헤더 */}
         <View style={[styles.header, { borderBottomColor: colors.border }]}>
@@ -366,7 +380,7 @@ export default function WeeklyHeatmapScreen({ visible, onClose, onDayPress }: Pr
           </View>
 
         </ScrollView>
-      </View>
+      </Animated.View>
     </Modal>
   );
 }

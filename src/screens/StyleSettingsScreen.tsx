@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,11 @@ import {
   Alert,
   KeyboardAvoidingView,
   ActivityIndicator,
+  Animated,
+  Dimensions,
 } from 'react-native';
+
+const SCREEN_W = Dimensions.get('window').width;
 import { AppText } from '../components/AppText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
@@ -284,6 +288,21 @@ const prev = StyleSheet.create({
 export default function StyleSettingsScreen({ visible, onClose }: Props) {
   const { colors, isDark } = useAppColors();
   const insets = useSafeAreaInsets();
+
+  // 오른쪽에서 슬라이드 인/아웃
+  const slideX = useRef(new Animated.Value(SCREEN_W)).current;
+  const [modalVisible, setModalVisible] = useState(visible);
+
+  useEffect(() => {
+    if (visible) {
+      setModalVisible(true);
+      Animated.timing(slideX, { toValue: 0, duration: 280, useNativeDriver: true }).start();
+    } else {
+      Animated.timing(slideX, { toValue: SCREEN_W, duration: 250, useNativeDriver: true }).start(
+        () => setModalVisible(false)
+      );
+    }
+  }, [visible]);
   const {
     blockSize, timeFormat, textSize, textPosition,
     themeMode, setThemeMode,
@@ -384,8 +403,8 @@ export default function StyleSettingsScreen({ visible, onClose }: Props) {
   };
 
   return (
-    <Modal visible={visible} animationType="none" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+    <Modal visible={modalVisible} transparent animationType="none" onRequestClose={onClose}>
+      <Animated.View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top, paddingBottom: insets.bottom, transform: [{ translateX: slideX }] }]}>
         <View style={[styles.header, { borderBottomColor: colors.border }]}>
           <TouchableOpacity onPress={onClose} style={styles.backBtn}>
             <AppText style={[styles.backText, { color: '#4A90D9' }]}>‹</AppText>
@@ -500,14 +519,14 @@ export default function StyleSettingsScreen({ visible, onClose }: Props) {
             ))}
           </View>
         </ScrollView>
-      </View>
 
-      <CategoryEditModal
-        key={editingCat?.id ?? 'none'}
-        category={editingCat}
-        onSave={handleSaveCategory}
-        onClose={() => setEditingCat(null)}
-      />
+        <CategoryEditModal
+          key={editingCat?.id ?? 'none'}
+          category={editingCat}
+          onSave={handleSaveCategory}
+          onClose={() => setEditingCat(null)}
+        />
+      </Animated.View>
     </Modal>
   );
 }
