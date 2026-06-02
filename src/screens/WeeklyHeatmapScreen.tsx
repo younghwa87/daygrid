@@ -312,6 +312,9 @@ export default function WeeklyHeatmapScreen({ visible, onClose, onDayPress }: Pr
                 const isFuture = weekDays[i].isAfter(dayjs(), 'day');
                 return (
                   <View key={i} style={styles.barCol}>
+                    <AppText style={[styles.barDayLabel, { color: isFuture ? colors.border : colors.textSecondary }]}>
+                      {DAY_LABELS[i]}
+                    </AppText>
                     <AnimatedBar
                       score={d.score}
                       color={d.color}
@@ -321,9 +324,6 @@ export default function WeeklyHeatmapScreen({ visible, onClose, onDayPress }: Pr
                       delayMs={i * 60}
                       visible={visible}
                     />
-                    <AppText style={[styles.barDayLabel, { color: isFuture ? colors.border : colors.textSecondary }]}>
-                      {DAY_LABELS[i]}
-                    </AppText>
                   </View>
                 );
               })}
@@ -433,7 +433,7 @@ const styles = StyleSheet.create({
   statLabel: { fontSize: 11, marginBottom: 3 },
   statValue: { fontSize: 14, fontWeight: '600' },
   barTitle: { fontSize: 11, fontWeight: '600', marginBottom: 4 },
-  densityBars: { flexDirection: 'row', gap: 4, alignItems: 'flex-end' },
-  barCol: { flex: 1, alignItems: 'center', gap: 3 },
+  densityBars: { flexDirection: 'row', gap: 4 },
+  barCol: { flex: 1, alignItems: 'center', gap: 4 },
   barDayLabel: { fontSize: 9, fontWeight: '600' },
 });
