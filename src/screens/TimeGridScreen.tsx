@@ -6,18 +6,19 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/ko';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { useScheduleStore } from '../store/scheduleStore';
+import TimeGrid from '../components/TimeGrid';
 import ScheduleFormModal from '../components/ScheduleFormModal';
 import StyleSettingsScreen from './StyleSettingsScreen';
 import WeeklyHeatmapScreen from './WeeklyHeatmapScreen';
 import MonthCalendarModal from '../components/MonthCalendarModal';
 import WeekStrip from '../components/WeekStrip';
 import BottomTabBar, { TabName } from '../components/BottomTabBar';
-import DayScheduleView from '../components/DayScheduleView';
 import { notificationService } from '../services/NotificationService';
 import { useNotificationHandler } from '../hooks/useNotificationHandler';
 import { useAppColors } from '../hooks/useAppColors';
 import { Schedule, ColorCategory, RepeatType, ScheduleType } from '../types';
 import uuid from '../utils/uuid';
+import { useSettingsStore } from '../store/settingsStore';
 
 dayjs.locale('ko');
 
@@ -29,7 +30,7 @@ type ModalState =
   | null;
 
 export default function TimeGridScreen() {
-  const { colors, isDark } = useAppColors();
+  const { colors } = useAppColors();
   const insets = useSafeAreaInsets();
 
   const {
@@ -46,11 +47,14 @@ export default function TimeGridScreen() {
   } = useScheduleStore();
 
   const schedules = getSchedulesByDate(selectedDate);
+  const { gridStartHour, gridEndHour } = useSettingsStore();
+
   const [modalState, setModalState] = useState<ModalState>(null);
   const [activeTab, setActiveTab] = useState<TabName>('home');
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [heatmapVisible, setHeatmapVisible] = useState(false);
   const [calendarVisible, setCalendarVisible] = useState(false);
+  const [scrollToHour, setScrollToHour] = useState<number | undefined>();
 
   useNotificationHandler();
 
@@ -80,24 +84,46 @@ export default function TimeGridScreen() {
   }, []);
 
   const handleTabPress = useCallback((tab: TabName) => {
-    if (tab === 'add') {
-      openAddModal();
-      return;
-    }
-    if (tab === 'calendar') {
-      setCalendarVisible(true);
-      return;
-    }
-    if (tab === 'weekly') {
-      setHeatmapVisible(true);
-      return;
-    }
-    if (tab === 'settings') {
-      setSettingsVisible(true);
-      return;
-    }
+    if (tab === 'add') { openAddModal(); return; }
+    if (tab === 'calendar') { setCalendarVisible(true); return; }
+    if (tab === 'weekly') { setScrollToHour(undefined); setHeatmapVisible(true); return; }
+    if (tab === 'settings') { setSettingsVisible(true); return; }
     setActiveTab(tab);
   }, [openAddModal]);
+
+  const handleStartCreating = useCallback((startMinutes: number, endMinutes: number) => {
+    setModalState({ mode: 'create', startMinutes, endMinutes });
+  }, []);
+
+  const handleMoveSchedule = useCallback(
+    (scheduleId: string, newStartTime: number, newEndTime: number) => {
+      if (hasOverlap(newStartTime, newEndTime, selectedDate, scheduleId)) return;
+      const schedule = allSchedules.find(s => s.id === scheduleId);
+      if (!schedule) return;
+      updateSchedule(scheduleId, { startTime: newStartTime, endTime: newEndTime });
+      if (schedule.hasNotification) {
+        notificationService.cancelAllAlarmsForSchedule(scheduleId).then(() => {
+          notificationService.scheduleAlarmsForSchedule({ ...schedule, startTime: newStartTime, endTime: newEndTime });
+        });
+      }
+    },
+    [allSchedules, hasOverlap, selectedDate, updateSchedule]
+  );
+
+  const handleResizeSchedule = useCallback(
+    (scheduleId: string, newEndTime: number) => {
+      const schedule = allSchedules.find(s => s.id === scheduleId);
+      if (!schedule) return;
+      if (hasOverlap(schedule.startTime, newEndTime, selectedDate, scheduleId)) return;
+      updateSchedule(scheduleId, { endTime: newEndTime });
+      if (schedule.hasNotification) {
+        notificationService.cancelAllAlarmsForSchedule(scheduleId).then(() => {
+          notificationService.scheduleAlarmsForSchedule({ ...schedule, endTime: newEndTime });
+        });
+      }
+    },
+    [allSchedules, hasOverlap, selectedDate, updateSchedule]
+  );
 
   const handleEditSchedule = useCallback((schedule: Schedule) => {
     const original = schedule.isOverflow
@@ -239,7 +265,7 @@ export default function TimeGridScreen() {
           <AppText style={[styles.monthLabel, { color: colors.textSecondary }]}>{monthLabel}</AppText>
           <AppText style={[styles.dayLabel, { color: colors.text }]}>
             {dayLabel}
-            {isToday && <AppText style={[styles.todayBadge, { color: '#4A90D9' }]}> · 오늘</AppText>}
+            {isToday && <AppText style={styles.todayBadge}> · 오늘</AppText>}
           </AppText>
         </View>
       </View>
@@ -247,13 +273,17 @@ export default function TimeGridScreen() {
       {/* 주간 날짜 스트립 */}
       <WeekStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} />
 
-      {/* 일정 블록 뷰 */}
+      {/* 타임 그리드 (기존 롱프레스+드래그 그대로 유지) */}
       <GestureDetector gesture={swipeGesture}>
-        <View style={styles.content}>
-          <DayScheduleView
+        <View style={styles.gridWrapper}>
+          <TimeGrid
             schedules={schedules}
-            onPressSchedule={handleEditSchedule}
-            onLongPress={openAddModal}
+            selectedDate={selectedDate}
+            scrollToHour={scrollToHour}
+            onStartCreating={handleStartCreating}
+            onEditSchedule={handleEditSchedule}
+            onMoveSchedule={handleMoveSchedule}
+            onResizeSchedule={handleResizeSchedule}
           />
         </View>
       </GestureDetector>
@@ -271,14 +301,14 @@ export default function TimeGridScreen() {
         onClose={() => setCalendarVisible(false)}
       />
 
-      {/* 설정 화면 (오른쪽에서 슬라이드) */}
+      {/* 설정 (오른쪽에서 슬라이드) */}
       <StyleSettingsScreen visible={settingsVisible} onClose={() => setSettingsVisible(false)} />
 
       {/* 주간 히트맵 (오른쪽에서 슬라이드) */}
       <WeeklyHeatmapScreen
         visible={heatmapVisible}
         onClose={() => setHeatmapVisible(false)}
-        onDayPress={(date) => { setSelectedDate(date); setHeatmapVisible(false); }}
+        onDayPress={(date, hour) => { setSelectedDate(date); setScrollToHour(hour); setHeatmapVisible(false); }}
       />
 
       {/* 일정 생성/수정 모달 */}
@@ -309,10 +339,10 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingTop: 12,
-    paddingBottom: 8,
+    paddingBottom: 6,
   },
-  monthLabel: { fontSize: 13, fontWeight: '500', marginBottom: 2 },
+  monthLabel: { fontSize: 13, fontWeight: '500', marginBottom: 1 },
   dayLabel: { fontSize: 26, fontWeight: '700', letterSpacing: -0.5 },
-  todayBadge: { fontSize: 18, fontWeight: '500' },
-  content: { flex: 1 },
+  todayBadge: { fontSize: 18, fontWeight: '500', color: '#4A90D9' },
+  gridWrapper: { flex: 1 },
 });

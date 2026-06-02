@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { AppText } from './AppText';
 import { useAppColors } from '../hooks/useAppColors';
 
@@ -10,30 +11,31 @@ interface Props {
   onPress: (tab: TabName) => void;
 }
 
-const TABS: { name: TabName; label: string }[] = [
-  { name: 'home',     label: '홈'     },
-  { name: 'calendar', label: '캘린더' },
-  { name: 'add',      label: ''       },
-  { name: 'weekly',   label: '주간'   },
-  { name: 'settings', label: '설정'   },
+const TABS: { name: TabName; icon: string; label: string }[] = [
+  { name: 'home',     icon: 'time-outline',          label: '일정'   },
+  { name: 'calendar', icon: 'calendar-outline',       label: '캘린더' },
+  { name: 'add',      icon: 'add',                    label: ''       },
+  { name: 'weekly',   icon: 'bar-chart-outline',      label: '주간'   },
+  { name: 'settings', icon: 'settings-outline',       label: '설정'   },
 ];
 
 export default function BottomTabBar({ activeTab, onPress }: Props) {
   const { colors, isDark } = useAppColors();
+  const activeColor = isDark ? '#fff' : '#1A1A1A';
+  const inactiveColor = colors.textSecondary;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
-      {TABS.map(({ name, label }) => {
+      {TABS.map(({ name, icon, label }) => {
         const isAdd = name === 'add';
         const isActive = activeTab === name;
-        const activeColor = isDark ? '#fff' : '#1A1A1A';
-        const inactiveColor = colors.textSecondary;
+        const color = isActive ? activeColor : inactiveColor;
 
         if (isAdd) {
           return (
             <TouchableOpacity key={name} style={styles.tabBtn} onPress={() => onPress(name)} activeOpacity={0.8}>
               <View style={[styles.addCircle, { backgroundColor: isDark ? '#fff' : '#1A1A1A' }]}>
-                <AppText style={[styles.addPlus, { color: isDark ? '#1A1A1A' : '#fff' }]}>+</AppText>
+                <Ionicons name="add" size={26} color={isDark ? '#1A1A1A' : '#fff'} />
               </View>
             </TouchableOpacity>
           );
@@ -41,10 +43,10 @@ export default function BottomTabBar({ activeTab, onPress }: Props) {
 
         return (
           <TouchableOpacity key={name} style={styles.tabBtn} onPress={() => onPress(name)} activeOpacity={0.7}>
-            <AppText style={[styles.tabLabel, { color: isActive ? activeColor : inactiveColor, fontWeight: isActive ? '700' : '500' }]}>
+            <Ionicons name={icon as any} size={22} color={color} />
+            <AppText style={[styles.label, { color, fontWeight: isActive ? '700' : '400' }]}>
               {label}
             </AppText>
-            {isActive && <View style={[styles.activeDot, { backgroundColor: activeColor }]} />}
           </TouchableOpacity>
         );
       })}
@@ -60,8 +62,7 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   tabBtn: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 4, gap: 3 },
-  tabLabel: { fontSize: 11 },
-  activeDot: { width: 4, height: 4, borderRadius: 2 },
+  label: { fontSize: 10 },
   addCircle: {
     width: 44,
     height: 44,
@@ -69,5 +70,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  addPlus: { fontSize: 26, lineHeight: 30, fontWeight: '300' },
 });

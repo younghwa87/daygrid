@@ -1,18 +1,32 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Modal,
   View,
   TouchableOpacity,
+  ScrollView,
   StyleSheet,
+  Animated,
+  Dimensions,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { AppText } from './AppText';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import dayjs from 'dayjs';
+import 'dayjs/locale/ko';
 import { isHoliday } from 'korean-holidays';
 import { useAppColors } from '../hooks/useAppColors';
 import { useScheduleStore } from '../store/scheduleStore';
 
+dayjs.locale('ko');
+
 function isPublicHoliday(dateStr: string): boolean {
   return isHoliday(new Date(dateStr)) !== null;
+}
+
+function formatTime(min: number): string {
+  const h = Math.floor(min / 60) % 24;
+  const m = min % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
 type Props = {
@@ -23,18 +37,33 @@ type Props = {
 };
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+const SCREEN_H = Dimensions.get('window').height;
 
 export default function MonthCalendarModal({ visible, selectedDate, onSelectDate, onClose }: Props) {
-  const { colors } = useAppColors();
+  const { colors, isDark } = useAppColors();
+  const insets = useSafeAreaInsets();
   const { getSchedulesByDate } = useScheduleStore();
 
   const [viewMonth, setViewMonth] = useState(() => dayjs(selectedDate).startOf('month'));
+  const [localSelected, setLocalSelected] = useState(selectedDate);
   const today = dayjs().format('YYYY-MM-DD');
 
-  // 모달이 열릴 때 선택된 날짜의 달로 이동
+  // 슬라이드업 애니메이션
+  const slideY = useRef(new Animated.Value(SCREEN_H)).current;
+  const [modalVisible, setModalVisible] = useState(visible);
+
   useEffect(() => {
-    if (visible) setViewMonth(dayjs(selectedDate).startOf('month'));
-  }, [visible, selectedDate]);
+    if (visible) {
+      setModalVisible(true);
+      setViewMonth(dayjs(selectedDate).startOf('month'));
+      setLocalSelected(selectedDate);
+      Animated.spring(slideY, { toValue: 0, damping: 22, stiffness: 180, useNativeDriver: true }).start();
+    } else {
+      Animated.timing(slideY, { toValue: SCREEN_H, duration: 250, useNativeDriver: true }).start(
+        () => setModalVisible(false)
+      );
+    }
+  }, [visible]);
 
   const cells = useMemo(() => {
     const startDow = viewMonth.day();
@@ -57,142 +86,218 @@ export default function MonthCalendarModal({ visible, selectedDate, onSelectDate
     return set;
   }, [cells, getSchedulesByDate]);
 
+  const daySchedules = useMemo(
+    () => getSchedulesByDate(localSelected).filter(s => !s.isOverflow).sort((a, b) => a.startTime - b.startTime),
+    [localSelected, getSchedulesByDate]
+  );
+
+  const handleSelectDate = (date: string) => {
+    setLocalSelected(date);
+    onSelectDate(date);
+  };
+
+  // 카드 배경: 다크면 어두운 표면, 라이트면 밝은 표면
+  const cardBg = isDark ? '#2A2A2C' : '#F2F2F7';
+  const scheduleCardBg = isDark ? '#3A3A3C' : '#FFFFFF';
+
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <TouchableOpacity style={s.backdrop} activeOpacity={1} onPress={onClose} />
-      <View style={[s.sheet, { backgroundColor: colors.surface }]}>
+    <Modal visible={modalVisible} transparent animationType="none" onRequestClose={onClose}>
+      <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
+      <Animated.View
+        style={[
+          styles.sheet,
+          {
+            backgroundColor: colors.background,
+            paddingBottom: insets.bottom + 8,
+            transform: [{ translateY: slideY }],
+          },
+        ]}
+      >
+        {/* 핸들 */}
+        <View style={[styles.handle, { backgroundColor: colors.border }]} />
+
         {/* 월 네비게이션 */}
-        <View style={s.monthNav}>
-          <TouchableOpacity onPress={() => setViewMonth((v) => v.subtract(1, 'month'))} style={s.navBtn}>
-            <AppText style={[s.navArrow, { color: colors.text }]}>‹</AppText>
+        <View style={styles.monthNav}>
+          <TouchableOpacity onPress={() => setViewMonth(v => v.subtract(1, 'month'))} style={styles.navBtn}>
+            <Ionicons name="chevron-back" size={20} color={colors.textSecondary} />
           </TouchableOpacity>
-          <AppText style={[s.monthTitle, { color: colors.text }]}>
+          <AppText style={[styles.monthTitle, { color: colors.text }]}>
             {viewMonth.format('YYYY년 M월')}
           </AppText>
-          <TouchableOpacity onPress={() => setViewMonth((v) => v.add(1, 'month'))} style={s.navBtn}>
-            <AppText style={[s.navArrow, { color: colors.text }]}>›</AppText>
+          <TouchableOpacity onPress={() => setViewMonth(v => v.add(1, 'month'))} style={styles.navBtn}>
+            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
 
-        {/* 요일 헤더 */}
-        <View style={s.weekRow}>
-          {WEEKDAYS.map((day, i) => (
-            <AppText
-              key={day}
-              style={[
-                s.weekDayText,
-                { color: i === 0 ? '#E05555' : i === 6 ? '#4A90D9' : colors.textSecondary },
-              ]}
-            >
-              {day}
-            </AppText>
-          ))}
-        </View>
-
-        {/* 날짜 그리드 */}
-        <View style={s.grid}>
-          {cells.map((date, i) => {
-            if (!date) return <View key={`e${i}`} style={s.cell} />;
-            const isToday = date === today;
-            const isSelected = date === selectedDate;
-            const hasSchedule = datesWithSchedule.has(date);
-            const dow = dayjs(date).day();
-            const isHoliday = isPublicHoliday(date);
-            const textColor = isSelected
-              ? '#fff'
-              : isToday
-              ? '#4A90D9'
-              : dow === 0 || isHoliday
-              ? '#E05555'
-              : dow === 6
-              ? '#4A90D9'
-              : colors.text;
-
-            return (
-              <TouchableOpacity
-                key={date}
-                style={s.cell}
-                onPress={() => { onSelectDate(date); onClose(); }}
+        {/* 캘린더 카드 */}
+        <View style={[styles.calCard, { backgroundColor: cardBg }]}>
+          {/* 요일 헤더 */}
+          <View style={styles.weekRow}>
+            {WEEKDAYS.map((day, i) => (
+              <AppText
+                key={day}
+                style={[
+                  styles.weekDayText,
+                  { color: i === 0 ? '#E05555' : i === 6 ? '#4A90D9' : colors.textSecondary },
+                ]}
               >
-                <View
-                  style={[
-                    s.dayCircle,
-                    isSelected && { backgroundColor: '#4A90D9' },
-                    isToday && !isSelected && { borderWidth: 1.5, borderColor: '#4A90D9' },
-                  ]}
+                {day}
+              </AppText>
+            ))}
+          </View>
+
+          {/* 날짜 그리드 */}
+          <View style={styles.grid}>
+            {cells.map((date, i) => {
+              if (!date) return <View key={`e${i}`} style={styles.cell} />;
+              const isToday = date === today;
+              const isSelected = date === localSelected;
+              const hasSchedule = datesWithSchedule.has(date);
+              const dow = dayjs(date).day();
+              const isHoli = isPublicHoliday(date);
+              const textColor = isSelected
+                ? '#fff'
+                : isToday
+                ? '#4A90D9'
+                : dow === 0 || isHoli
+                ? '#E05555'
+                : dow === 6
+                ? '#4A90D9'
+                : colors.text;
+
+              return (
+                <TouchableOpacity
+                  key={date}
+                  style={styles.cell}
+                  onPress={() => handleSelectDate(date)}
+                  activeOpacity={0.7}
                 >
-                  <AppText style={[s.dayText, { color: textColor }]}>
-                    {dayjs(date).date()}
-                  </AppText>
-                </View>
-                {hasSchedule && (
-                  <View style={[s.dot, { backgroundColor: isSelected ? '#fff' : '#4A90D9' }]} />
-                )}
-              </TouchableOpacity>
-            );
-          })}
+                  <View style={[
+                    styles.dayCircle,
+                    isSelected && styles.selectedCircle,
+                    isToday && !isSelected && { borderWidth: 1.5, borderColor: '#4A90D9' },
+                  ]}>
+                    <AppText style={[styles.dayText, { color: textColor }]}>
+                      {dayjs(date).date()}
+                    </AppText>
+                  </View>
+                  {hasSchedule && (
+                    <View style={[styles.dot, { backgroundColor: isSelected ? '#fff' : '#4A90D9' }]} />
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
-      </View>
+
+        {/* 선택된 날짜 일정 목록 */}
+        <View style={styles.listHeader}>
+          <AppText style={[styles.listDateLabel, { color: colors.text }]}>
+            {dayjs(localSelected).format('M월 D일 ddd요일')}
+          </AppText>
+        </View>
+
+        <ScrollView
+          style={styles.scheduleList}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 8 }}
+        >
+          {daySchedules.length === 0 ? (
+            <AppText style={[styles.emptyText, { color: colors.textSecondary }]}>일정 없음</AppText>
+          ) : (
+            daySchedules.map(s => {
+              const color = s.colorCategory?.color ?? '#4A90D9';
+              return (
+                <TouchableOpacity
+                  key={s.id}
+                  style={[styles.scheduleItem, { backgroundColor: scheduleCardBg }]}
+                  onPress={() => { onSelectDate(localSelected); onClose(); }}
+                  activeOpacity={0.75}
+                >
+                  <View style={[styles.colorBar, { backgroundColor: color }]} />
+                  <View style={styles.scheduleInfo}>
+                    <AppText style={[styles.scheduleTitle, { color: colors.text }]} numberOfLines={1}>
+                      {s.title}
+                    </AppText>
+                    <AppText style={[styles.scheduleTime, { color: colors.textSecondary }]}>
+                      {formatTime(s.startTime)} – {formatTime(s.endTime)}
+                    </AppText>
+                  </View>
+                </TouchableOpacity>
+              );
+            })
+          )}
+        </ScrollView>
+      </Animated.View>
     </Modal>
   );
 }
 
-const s = StyleSheet.create({
+const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: '#00000044',
+    backgroundColor: '#00000055',
   },
   sheet: {
+    maxHeight: '85%',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    paddingTop: 16,
-    paddingBottom: 32,
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+  },
+  handle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 12,
   },
   monthNav: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 10,
   },
-  navBtn: { padding: 8 },
-  navArrow: { fontSize: 24, lineHeight: 26 },
+  navBtn: { padding: 6 },
   monthTitle: { fontSize: 16, fontWeight: '700' },
-  weekRow: {
-    flexDirection: 'row',
-    marginBottom: 4,
+  calCard: {
+    borderRadius: 14,
+    padding: 12,
+    marginBottom: 16,
   },
+  weekRow: { flexDirection: 'row', marginBottom: 4 },
   weekDayText: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
     paddingVertical: 4,
   },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  cell: {
-    width: '14.285714%',
-    alignItems: 'center',
-    paddingVertical: 4,
-  },
+  grid: { flexDirection: 'row', flexWrap: 'wrap' },
+  cell: { width: '14.285714%', alignItems: 'center', paddingVertical: 3 },
   dayCircle: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dayText: {
-    fontSize: 14,
-    fontWeight: '500',
+  selectedCircle: { backgroundColor: '#4A90D9' },
+  dayText: { fontSize: 13, fontWeight: '500' },
+  dot: { width: 4, height: 4, borderRadius: 2, marginTop: 2 },
+  listHeader: { marginBottom: 8 },
+  listDateLabel: { fontSize: 14, fontWeight: '600' },
+  scheduleList: { flex: 1 },
+  emptyText: { fontSize: 13, textAlign: 'center', paddingVertical: 16 },
+  scheduleItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 10,
+    marginBottom: 8,
+    overflow: 'hidden',
   },
-  dot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    marginTop: 2,
-  },
+  colorBar: { width: 4, alignSelf: 'stretch' },
+  scheduleInfo: { flex: 1, paddingHorizontal: 12, paddingVertical: 10 },
+  scheduleTitle: { fontSize: 14, fontWeight: '600', marginBottom: 2 },
+  scheduleTime: { fontSize: 12 },
 });
